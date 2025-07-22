@@ -1,5 +1,9 @@
 import { TranslationMap } from '../utils/translationMap';
 
+// 添加缺失的变量声明
+// 移除重复声明，下方已有变量定义
+let translationVersion: string | null = null;
+
 /**
  * 执行DOM翻译替换
  * @param lang 语言类型: 'simplified' 或 'traditional'
@@ -21,7 +25,8 @@ async function loadTranslations(lang: string): Promise<TranslationMap> {
     const cachedData = await browser.storage.local.get(cacheKey);
     if (cachedData[cacheKey]) {
       console.log(`使用缓存的${lang}翻译数据`);
-      console.log(cachedData[cacheKey]);
+      // 从缓存中提取版本信息
+      translationVersion = cachedData[cacheKey].url_version || null;
       return cachedData[cacheKey];
     }
 
@@ -32,9 +37,11 @@ async function loadTranslations(lang: string): Promise<TranslationMap> {
     }
 
     const translations = await response.json() as TranslationMap;
+    // 提取并保存版本信息
+    translationVersion = translations.url_version || null;
     // 保存到本地缓存（永久有效）
     await browser.storage.local.set({ [cacheKey]: translations });
-    console.log(`已缓存${lang}翻译数据`);
+    console.log(`已缓存${lang}翻译数据，版本: ${translationVersion}`);
 
     return translations;
   } catch (error) {
@@ -274,4 +281,16 @@ export default defineContentScript({
       }
     });
   },
+});
+
+// 扩展消息监听器以支持版本查询
+browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'refreshTranslation') {
+    initTranslation();
+  } else if (message.action === 'getVersion') {
+    // 返回当前版本信息
+    sendResponse({ version: translationVersion });
+  }
+  // 保持消息通道开放以支持异步响应
+  return true;
 });

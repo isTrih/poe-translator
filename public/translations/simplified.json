@@ -1,10 +1,11 @@
 {
-  "My trade listings": "我的交易列表",
-  "Trade listings": "交易列表",
-  "Trade": "交易",
-  "Stash": "仓库",
-  "Snapshots": "快照",
-  "Services": "服务",
-  "Service listings": "服务列表",
-  "My service listings": "我的服务列表"
+  "url_version": "1.0.1",
+  "Mercenaries": "佣兵",
+  "Hardcore Mercenaries": "佣兵-专家模式",
+  "SSF Mercenaries": "佣兵-独狼模式",
+  "HC SSF Mercenaries": "佣兵-专家独狼模式",
+  "Ruthless Mercenaries": "佣兵-残暴模式",
+  "HC Ruthless Mercenaries": "佣兵-专家残暴模式",
+  "SSF R Mercenaries": "佣兵-独狼残暴模式",
+  "HC SSF R Mercenaries": "佣兵-专家独狼残暴模式"
 }

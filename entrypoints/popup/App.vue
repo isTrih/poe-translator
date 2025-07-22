@@ -116,6 +116,43 @@ async function clearTranslationCache() {
 const openWealthyExileStash = () => {
   window.open('https://wealthyexile.com/stash', '_blank');
 };
+
+// 添加版本信息相关状态
+const configVersion = ref<string | null>(null);
+const versionLoading = ref<boolean>(false);
+const versionError = ref<string | null>(null);
+
+/**
+ * 从content script获取配置版本信息
+ */
+async function fetchConfigVersion() {
+  versionLoading.value = true;
+  versionError.value = null;
+  try {
+    // 获取当前活动标签页
+    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+    if (!tab.id) {
+      throw new Error('无法获取当前标签页ID');
+    }
+
+    // 向content script发送版本查询请求
+    const response = await browser.tabs.sendMessage(tab.id, { action: 'getVersion' });
+    configVersion.value = response?.version || '未知版本';
+  } catch (error) {
+    console.error('获取版本信息失败:', error);
+    versionError.value = '无法获取版本信息';
+  } finally {
+    versionLoading.value = false;
+  }
+}
+
+// 在加载配置后获取版本信息
+onMounted(async () => {
+  await loadLanguagePreference();
+  await loadUrlPrefixConfig();
+  // 获取版本信息
+  await fetchConfigVersion();
+});
 </script>
 
 <template>
@@ -145,6 +182,12 @@ const openWealthyExileStash = () => {
         </button>
       </div>
       <p class="hint">配置示例: https://example.com/translations/</p>
+      <!-- 添加版本信息显示 -->
+      <div class="version-info">
+        <span v-if="versionLoading">加载版本中...</span>
+        <span v-else-if="versionError" class="error">{{ versionError }}</span>
+        <span v-else>当前配置版本: {{ configVersion }}</span>
+      </div>
     </div>
 
     <div class="info">
@@ -251,5 +294,15 @@ button:disabled {
 
 .cache-button:hover {
   background-color: #535bf2;
+}
+
+/* 添加版本信息样式 */
+.version-info {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #666;
+}
+.error {
+  color: #ff4444;
 }
 </style>

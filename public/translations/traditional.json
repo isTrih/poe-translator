@@ -1,3 +1,11 @@
 {
-   
+    "url_version": "1.0.1",
+    "Mercenaries": "傭兵",
+    "Hardcore Mercenaries": "傭兵-專家模式",
+    "SSF Mercenaries": "傭兵-自力模式",
+    "HC SSF Mercenaries": "傭兵-專家自力模式",
+    "Ruthless Mercenaries": "傭兵-殘暴模式",
+    "HC Ruthless Mercenaries": "傭兵-專家殘暴模式",
+    "SSF R Mercenaries": "傭兵-自力殘暴模式",
+    "HC SSF R Mercenaries": "傭兵-專家自力殘暴模式"
 }
