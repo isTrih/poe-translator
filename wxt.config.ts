@@ -1,10 +1,14 @@
 import { defineConfig } from 'wxt';
+import tailwindcss from "@tailwindcss/vite";
 
 /**
  * WXT配置文件
  * 声明插件所需的权限和功能
  */
 export default defineConfig({
+   vite: () => ({
+    plugins: [tailwindcss()],
+  }),
   modules: ['@wxt-dev/module-vue','@wxt-dev/auto-icons'],
   browser: 'edge',
   // 添加调试端口配置

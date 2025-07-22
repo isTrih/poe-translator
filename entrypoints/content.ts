@@ -17,7 +17,7 @@ async function loadTranslations(lang: string): Promise<TranslationMap> {
   try {
     // 从存储获取URL前缀配置，使用默认值作为回退
     const { translationUrlPrefix } = await browser.storage.local.get('translationUrlPrefix');
-    const baseUrl = translationUrlPrefix || 'https://assets.checkpoint321.com/poe/translations/';
+    const baseUrl = translationUrlPrefix || 'https://raw.githubusercontent.com/isTrih/poe-translator/refs/heads/main/public/translations/';
     const url = `${baseUrl}${lang}.json`;
 
     // 检查本地缓存
@@ -84,6 +84,30 @@ function translatePage(lang: 'simplified' | 'traditional', cachedTranslations: T
     return result;
   };
 
+  /**
+   * 提取文本中的特殊模式（数字L、-数字p、-数字s）
+   * @param text - 原始文本
+   * @returns 修改后的文本和提取的特殊模式
+   */
+  const extractSpecialPatterns = (text: string): { modifiedText: string; specialPattern: string } => {
+    let specialPattern = '';
+    // 按优先级匹配三种模式
+    const patterns = [
+      { regex: / (\d+)L$/, type: 'L' },
+      { regex: /- (\d+)p$/, type: 'p' },
+      { regex: / - (\d+)s$/, type: 's' }
+    ];
+
+    for (const { regex } of patterns) {
+      const match = text.match(regex);
+      if (match) {
+        specialPattern = match[0];
+        return { modifiedText: text.replace(regex, ''), specialPattern };
+      }
+    }
+    return { modifiedText: text, specialPattern };
+  };
+
   const walk = (node: Node) => {
     // 仅处理文本节点，排除脚本和样式标签
     if (node.nodeType === Node.TEXT_NODE && node.textContent && 
@@ -95,8 +119,10 @@ function translatePage(lang: 'simplified' | 'traditional', cachedTranslations: T
       // 获取内置翻译作为回退
       const builtinTranslations = translationMaps[lang];
 
+      // 提取特殊模式
+      const { modifiedText, specialPattern } = extractSpecialPatterns(trimmedText);
       // 处理数字替换
-      const { processedText, numbers } = replaceNumbersWithHashes(trimmedText);
+      const { processedText, numbers } = replaceNumbersWithHashes(modifiedText);
       const hasNumbers = numbers.length > 0;
 
       // 优先使用缓存翻译，如果缓存中没有则使用内置翻译
@@ -111,6 +137,10 @@ function translatePage(lang: 'simplified' | 'traditional', cachedTranslations: T
         // 如果有数字需要还原，进行还原操作
         if (hasNumbers) {
           translatedValue = restoreNumbers(translatedValue, numbers);
+        }
+        // 恢复特殊模式
+        if (specialPattern) {
+          translatedValue += specialPattern;
         }
 
         // 计算原始文本的前导空格和尾随空格
@@ -133,8 +163,10 @@ function translatePage(lang: 'simplified' | 'traditional', cachedTranslations: T
           const trimmedPlaceholder = placeholder.trim();
           const builtinTranslations = translationMaps[lang];
 
+          // 提取特殊模式
+          const { modifiedText: placeholderModifiedText, specialPattern: placeholderSpecialPattern } = extractSpecialPatterns(trimmedPlaceholder);
           // 处理数字替换
-          const { processedText, numbers } = replaceNumbersWithHashes(trimmedPlaceholder);
+          const { processedText, numbers } = replaceNumbersWithHashes(placeholderModifiedText);
           const hasNumbers = numbers.length > 0;
 
           let translatedValue = null;
@@ -148,6 +180,10 @@ function translatePage(lang: 'simplified' | 'traditional', cachedTranslations: T
             // 如果有数字需要还原，进行还原操作
             if (hasNumbers) {
               translatedValue = restoreNumbers(translatedValue, numbers);
+            }
+            // 恢复特殊模式
+            if (placeholderSpecialPattern) {
+              translatedValue += placeholderSpecialPattern;
             }
             inputElement.placeholder = translatedValue;
           }

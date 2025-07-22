@@ -49,10 +49,10 @@ const isSaving = ref(false);
 async function loadUrlPrefixConfig() {
   try {
     const { translationUrlPrefix: savedPrefix } = await browser.storage.local.get('translationUrlPrefix');
-    translationUrlPrefix.value = savedPrefix || 'https://assets.checkpoint321.com/poe/translations/';
+    translationUrlPrefix.value = savedPrefix || 'https://raw.githubusercontent.com/isTrih/poe-translator/refs/heads/main/public/translations/';
   } catch (error) {
     console.error('加载URL配置失败:', error);
-    translationUrlPrefix.value = 'https://assets.checkpoint321.com/poe/translations/';
+    translationUrlPrefix.value = 'https://raw.githubusercontent.com/isTrih/poe-translator/refs/heads/main/public/translations/';
   }
 }
 
@@ -156,153 +156,88 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="container">
-    <div>
-      <button @click="openWealthyExileStash" class="cache-button">
-        Wealthy Exile
-      </button>
-    </div>
-    <h2>语言设置</h2>
-    <div class="language-selector">
-      <label class="radio-label">
-        <input type="radio" value="simplified" v-model="selectedLanguage" @change="saveLanguagePreference" />
-        简体中文
-      </label>
-      <label class="radio-label">
-        <input type="radio" value="traditional" v-model="selectedLanguage" @change="saveLanguagePreference" />
-        繁体中文
-      </label>
-    </div>
-    <div class="url-config-section">
-      <h3>翻译源配置</h3>
-      <div class="input-group">
-        <input type="text" v-model="translationUrlPrefix" placeholder="输入翻译文件URL前缀" />
-        <button @click="saveUrlPrefixConfig" :disabled="isSaving">
-          {{ isSaving ? '保存中...' : '保存配置' }}
+  <div class="container w-82 bg-gray-950 text-red-100 shadow-[0_0_20px_rgba(120,0,0,0.4)] overflow-hidden border-2 border-gray-800">
+    <!-- 头部装饰条 - 暗黑破坏神标志性红金渐变 -->
+    <div class="h-1.5 bg-gradient-to-r from-red-900 via-red-700 to-amber-700"></div>
+
+    <div class="pl-4 pt-4 pr-4 pb-3">
+      <!-- Wealthy Exile 按钮 -->
+      <div class="mb-5">
+        <button @click="openWealthyExileStash"
+          class="w-full cursor-pointer bg-gray-900/90 hover:bg-gray-800 border border-red-900/50 text-amber-300 py-2.5 px-3 rounded-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-[0_0_8px_rgba(180,0,0,0.3)] hover:shadow-[0_0_12px_rgba(180,0,0,0.5)]">
+          <span class="text-red-500">⚔️</span> Wealthy Exile（大宗交易所）
         </button>
       </div>
-      <p class="hint">配置示例: https://example.com/translations/</p>
-      <!-- 添加版本信息显示 -->
-      <div class="version-info">
-        <span v-if="versionLoading">加载版本中...</span>
-        <span v-else-if="versionError" class="error">{{ versionError }}</span>
-        <span v-else>当前配置版本: {{ configVersion }}</span>
+
+      <!-- 语言设置区域 -->
+      <div class="mb-6">
+        <h2 class="text-xl font-bold text-red-500 mb-2 text-shadow">语言设置
+          <span class="text-xs text-red-400/60 block text-center mt-1">（选择后页面将自动刷新）</span>
+        </h2>
+
+        <div class="language-selector flex flex-col gap-2.5">
+          <label
+            class="radio-label flex items-center p-3 bg-gray-900/70 border border-gray-800 cursor-pointer hover:border-red-800 transition duration-300 hover:bg-gray-800/70">
+            <input type="radio" value="simplified" v-model="selectedLanguage" @change="saveLanguagePreference"
+              class="accent-red-600 mr-3 h-4 w-4" />
+            <span class="text-amber-200">简体中文</span>
+          </label>
+          <label
+            class="radio-label flex items-center p-3 bg-gray-900/70 border border-gray-800 cursor-pointer hover:border-red-800 transition duration-300 hover:bg-gray-800/70">
+            <input type="radio" value="traditional" v-model="selectedLanguage" @change="saveLanguagePreference"
+              class="accent-red-600 mr-3 h-4 w-4" />
+            <span class="text-amber-200">繁体中文</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- 翻译源配置区域 -->
+      <div class="mb-5 bg-gray-900/60 p-3.5 rounded-sm border border-gray-800 shadow-inner">
+        <h3 class="text-lg font-semibold text-red-400 mb-2.5">自定义翻译源配置</h3>
+        <div class="input-group flex gap-2.5 mb-2.5">
+          <input type="text" v-model="translationUrlPrefix" placeholder="输入翻译文件URL前缀"
+            class="flex-1 bg-gray-900 border border-gray-800 rounded-sm px-3 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-red-600 text-red-200" />
+          <button @click="saveUrlPrefixConfig" :disabled="isSaving"
+            class="bg-red-900/80 cursor-pointer hover:bg-red-800 px-4 py-2.5 text-sm rounded-sm transition duration-300 disabled:bg-gray-800 text-amber-300 border border-red-900/50">
+            {{ isSaving ? '保存中...' : '保存' }}
+          </button>
+        </div>
+        <p class="hint text-xs text-red-500/50">配置示例: https://example.com/translations/</p>
+
+        <!-- 版本信息 -->
+        <div class="version-info mt-3 text-xs text-red-400/60">
+          <span v-if="versionLoading">加载版本中...</span>
+          <span v-else-if="versionError" class="text-red-500">{{ versionError }}</span>
+          <span v-else>当前配置版本: {{ configVersion }}</span>
+        </div>
+      </div>
+
+      <!-- 底部按钮区域 -->
+      <div class="cache-control flex gap-2.5">
+        <button @click="clearTranslationCache"
+          class="flex-1 bg-gray-900/80 hover:bg-gray-800 text-sm py-2.5 px-3 rounded-sm border border-gray-800 transition duration-300 text-red-200">
+          刷新缓存
+        </button>
+        <a href="https://afdian.tv/a/istrih" target="_blank"
+          class="w-16 h-10 flex items-center justify-center bg-gray-900/80 hover:bg-gray-800 rounded-sm border border-gray-800 transition duration-300 text-amber-300">
+          <span class="text-red-500">赞助我</span>
+        </a>
       </div>
     </div>
 
-    <div class="info">
-      <p>选择后页面将自动刷新</p>
-    </div>
-    <div class="cache-control">
-      <a class="w-40 ml-30" href="https://afdian.tv/a/istrih" target="_blank">
-        <img class="pl-4" width="160" src="https://pic1.afdiancdn.com/static/img/welcome/button-sponsorme.png"
-          alt=""></a>
-      <button @click="clearTranslationCache" class="cache-button">
-        刷新翻译缓存
-      </button>
-    </div>
+    <!-- 信息提示 -->
+    <p class="text-xs text-red-500/40 mb-1.5 text-center">
+      <a href="https://www.caimogu.cc/user/1297700.html" target="_blank" class="hover:text-red-400 transition-colors">踩蘑菇主页</a>
+      <span class="mx-1">|</span>
+      <a href="https://github.com/isTrih/poe-translator" target="_blank" class="hover:text-red-400 transition-colors">项目Github</a>
+    </p>
+    <p class="text-xs text-red-500/30 mb-2.5 text-center"> 三氢超正经©copyright </p>
   </div>
 </template>
 
 <style scoped>
-.container {
-  min-width: 250px;
-  padding: 20px;
-  font-family: system-ui, -apple-system, sans-serif;
-}
-
-h2 {
-  color: #333;
-  font-size: 18px;
-  margin-bottom: 15px;
-  text-align: center;
-}
-
-.language-selector {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.radio-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 6px;
-  transition: background-color 0.2s;
-}
-
-.radio-label:hover {
-  background-color: #f0f0f0;
-}
-
-.radio-label input {
-  accent-color: #42b883;
-}
-
-.url-config-section {
-  margin: 20px 0;
-  padding: 15px;
-  background-color: #f5f5f5;
-  border-radius: 8px;
-}
-
-.input-group {
-  display: flex;
-  gap: 8px;
-  margin: 10px 0;
-}
-
-input {
-  flex: 1;
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
-button {
-  padding: 8px 16px;
-  background-color: #42b883;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-button:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-.hint {
-  color: #666;
-  font-size: 12px;
-  margin-top: 4px;
-}
-
-.cache-control {
-  margin-top: 15px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.cache-button {
-  background-color: #646cff;
-}
-
-.cache-button:hover {
-  background-color: #535bf2;
-}
-
-/* 添加版本信息样式 */
-.version-info {
-  margin-top: 8px;
-  font-size: 12px;
-  color: #666;
-}
-.error {
-  color: #ff4444;
+/* 暗黑破坏神风格文字阴影 */
+.text-shadow {
+  text-shadow: 0 0 5px rgba(180, 0, 0, 0.7), 0 0 2px rgba(255, 215, 0, 0.5);
 }
 </style>
