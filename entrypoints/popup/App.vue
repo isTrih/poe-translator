@@ -39,6 +39,7 @@ async function saveLanguagePreference() {
   }
 }
 
+
 // URL配置相关
 const translationUrlPrefix = ref('');
 const isSaving = ref(false);
@@ -137,7 +138,7 @@ async function fetchConfigVersion() {
 
     // 向content script发送版本查询请求
     const response = await browser.tabs.sendMessage(tab.id, { action: 'getVersion' });
-    configVersion.value = response?.version || '未知版本';
+    configVersion.value = response?.version || '未知版本（或功能未开启）';
   } catch (error) {
     console.error('获取版本信息失败:', error);
     versionError.value = '无法获取版本信息';
@@ -153,13 +154,162 @@ onMounted(async () => {
   // 获取版本信息
   await fetchConfigVersion();
 });
+// 版本更新检查相关状态
+const localVersion = ref('');
+const remoteVersion = ref('');
+const updateAvailable = ref(false);
+const checkUpdateLoading = ref(false);
+const updateCheckError = ref(false);
+
+/**
+ * 从本地version.json文件获取当前版本
+ */
+async function getLocalVersion() {
+  try {
+    const response = await fetch('/version.json', {
+      cache: 'no-store' // 不缓存本地文件
+    });
+    const data = await response.json();
+    localVersion.value = data.version || '';
+    return data.version || '';
+  } catch (error) {
+    console.error('获取本地版本失败:', error);
+    localVersion.value = '未知版本';
+    return '';
+  }
+}
+
+/**
+ * 从远程服务器获取最新版本信息
+ * @returns 远程版本号
+ */
+
+// 定义版本检查响应接口
+// 在函数外部添加接口定义
+interface VersionCheckRequest {
+  action: 'checkVersion';
+}
+
+interface VersionCheckResponse {
+  success: boolean;
+  version?: string;
+  error?: string;
+}
+
+async function getRemoteVersion() {
+  try {
+    console.log('Popup发送版本请求...');
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    
+    // 使用Promise.race实现超时控制，移除sendMessage的signal参数
+    const response: VersionCheckResponse = await Promise.race([
+      browser.runtime.sendMessage<VersionCheckRequest, VersionCheckResponse>({
+        action: 'checkVersion'
+      }),
+      new Promise<never>((_, reject) => {
+        controller.signal.addEventListener('abort', () => {
+          reject(new Error('版本请求超时'));
+        });
+      })
+    ]);
+    
+    clearTimeout(timeoutId);
+    console.log('Popup收到响应:', response);
+    
+    if (!response) {
+      throw new Error('未收到Background响应');
+    }
+    
+    if (response.success) {
+      remoteVersion.value = response.version || '';
+      return response.version || '';
+    } else {
+      console.error('版本请求失败:', response.error);
+      updateCheckError.value = true;
+      return '';
+    }
+  } catch (error) {
+    // 错误处理逻辑
+    if (error instanceof Error) {
+      if (error.name === 'AbortError') {
+        console.error('版本请求超时');
+      } else {
+        console.error('Popup通信错误:', error.message);
+      }
+    } else {
+      console.error('未知错误:', error);
+    }
+    updateCheckError.value = true;
+    return '';
+  }
+}
+
+/**
+ * 比较两个版本号
+ * @param local - 本地版本号
+ * @param remote - 远程版本号
+ * @returns 如果远程版本更新则返回true
+ */
+function isNewVersionAvailable(local: string, remote: string): boolean {
+  if (!local || !remote) return false;
+
+  const localParts = local.split('.').map(Number);
+  const remoteParts = remote.split('.').map(Number);
+
+  // 比较每个版本段
+  for (let i = 0; i < Math.max(localParts.length, remoteParts.length); i++) {
+    const localPart = localParts[i] || 0;
+    const remotePart = remoteParts[i] || 0;
+
+    if (remotePart > localPart) return true;
+    if (remotePart < localPart) return false;
+  }
+
+  return false; // 版本相同
+}
+
+/**
+ * 检查是否有新版本可用
+ */
+async function checkForUpdates() {
+  checkUpdateLoading.value = true;
+  updateCheckError.value = false;
+  updateAvailable.value = false;
+
+  try {
+    // 并行获取本地和远程版本
+    const [local, remote] = await Promise.all([
+      getLocalVersion(),
+      getRemoteVersion()
+    ]);
+
+    // 比较版本
+    updateAvailable.value = isNewVersionAvailable(local, remote);
+  } finally {
+    checkUpdateLoading.value = false;
+  }
+}
+
+// 在组件挂载时检查更新
+onMounted(async () => {
+  await loadLanguagePreference();
+  await loadUrlPrefixConfig();
+  await fetchConfigVersion();
+  await checkForUpdates(); // 添加版本检查
+});
 </script>
 
 <template>
-  <div class="container w-82 bg-gray-950 text-red-100 shadow-[0_0_20px_rgba(120,0,0,0.4)] overflow-hidden border-2 border-gray-800">
-    <!-- 头部装饰条 - 暗黑破坏神标志性红金渐变 -->
+  <div
+    class="container w-82 bg-gray-950 text-red-100 shadow-[0_0_20px_rgba(120,0,0,0.4)] overflow-hidden border-2 border-gray-800">
+    <!-- 头部装饰条 -->
     <div class="h-1.5 bg-gradient-to-r from-red-900 via-red-700 to-amber-700"></div>
-
+    <div v-if="updateAvailable"
+      class="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-pulse">
+      <span>有新版本可用！</span>
+      <a href="https://github.com/isTrih/poe-translator/releases" target="_blank" class="text-white underline">立即下载</a>
+    </div>
     <div class="pl-4 pt-4 pr-4 pb-3">
       <!-- Wealthy Exile 按钮 -->
       <div class="mb-5">
@@ -172,7 +322,7 @@ onMounted(async () => {
       <!-- 语言设置区域 -->
       <div class="mb-6">
         <h2 class="text-xl font-bold text-red-500 mb-2 text-shadow">语言设置
-          <span class="text-xs text-red-400/60 block text-center mt-1">（选择后页面将自动刷新）</span>
+          <span class="text-xs text-red-400/60 text-center mt-1">（选择后页面将自动刷新）</span>
         </h2>
 
         <div class="language-selector flex flex-col gap-2.5">
@@ -202,13 +352,19 @@ onMounted(async () => {
             {{ isSaving ? '保存中...' : '保存' }}
           </button>
         </div>
-        <p class="hint text-xs text-red-500/50">配置示例: https://example.com/translations/</p>
+        <p class="hint text-xs text-red-500/90">配置示例: https://example.com/translations/</p>
 
         <!-- 版本信息 -->
-        <div class="version-info mt-3 text-xs text-red-400/60">
+        <div class="version-info mt-3 text-xs text-red-400/80">
           <span v-if="versionLoading">加载版本中...</span>
           <span v-else-if="versionError" class="text-red-500">{{ versionError }}</span>
-          <span v-else>当前配置版本: {{ configVersion }}</span>
+          <span v-else>当前翻译版本: {{ configVersion }}</span>
+        </div>
+        <div class="version-info mt-3 text-xs text-red-400/80">
+          <span>当前版本: {{ localVersion }}</span>
+        </div>
+                <div class="version-info mt-3 text-xs text-red-400/80">
+          <span>最新版本: {{ remoteVersion }}</span>
         </div>
       </div>
 
@@ -226,12 +382,14 @@ onMounted(async () => {
     </div>
 
     <!-- 信息提示 -->
-    <p class="text-xs text-red-500/40 mb-1.5 text-center">
-      <a href="https://www.caimogu.cc/user/1297700.html" target="_blank" class="hover:text-red-400 transition-colors">踩蘑菇主页</a>
+    <p class="text-xs text-red-400 mb-1.5 text-center">
+      <a href="https://www.caimogu.cc/user/1297700.html" target="_blank"
+        class="hover:text-amber-400 transition-colors">踩蘑菇主页</a>
       <span class="mx-1">|</span>
-      <a href="https://github.com/isTrih/poe-translator" target="_blank" class="hover:text-red-400 transition-colors">项目Github</a>
+      <a href="https://github.com/isTrih/poe-translator" target="_blank"
+        class="hover:text-amber-400 transition-colors">项目Github</a>
     </p>
-    <p class="text-xs text-red-500/30 mb-2.5 text-center"> 三氢超正经©copyright </p>
+    <p class="text-xs text-red-500/80 mb-2.5 text-center"> 三氢超正经©copyright </p>
   </div>
 </template>
 

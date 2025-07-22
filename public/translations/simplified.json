@@ -1,11 +1,16 @@
 {
-  "url_version": "1.0.1 SC",
-  "Mercenaries": "佣兵赛季",
-  "Hardcore Mercenaries": "佣兵赛季-专家模式",
-  "SSF Mercenaries": "佣兵赛季-独狼模式",
-  "HC SSF Mercenaries": "佣兵赛季-专家独狼模式",
-  "Ruthless Mercenaries": "佣兵赛季-残暴模式",
-  "HC Ruthless Mercenaries": "佣兵赛季-专家残暴模式",
-  "SSF R Mercenaries": "佣兵赛季-独狼残暴模式",
-  "HC SSF R Mercenaries": "佣兵赛季-专家独狼残暴模式"
+  "url_version": "1.0.1 SC hotfix-1",
+  "mercenaries": "佣兵赛季",
+  "hardcore mercenaries": "佣兵赛季-专家模式",
+  "ssf mercenaries": "佣兵赛季-独狼模式",
+  "hc ssf mercenaries": "佣兵赛季-专家独狼模式",
+  "ruthless mercenaries": "佣兵赛季-残暴模式",
+  "hc ruthless mercenaries": "佣兵赛季-专家残暴模式",
+  "ssf r mercenaries": "佣兵赛季-独狼残暴模式",
+  "hc ssf r mercenaries": "佣兵赛季-专家独狼残暴模式",
+  "seller's map": "对方提供地图",
+  "your map": "你提供地图",
+  "seller's map or your map rewards an additional map device slot.": "对方或你提供地图以获得地图设备插槽。",
+  "only your 10-way invite rewards an additional map device slot!": "只有你的10人邀请以获得地图设备插槽！",
+  "seller's map or your map rewards the exarch voidstone.": "对方或你提供地图以获得交易所虚空石。"
 }
