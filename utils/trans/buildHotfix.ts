@@ -25,6 +25,7 @@ const ZH_TW_DIR = path.join(JSON_DIR, 'zh_tw');
  */
 function readAndMergeJsonFiles(dir: string): Record<string, string> {
   const merged: Record<string, string> = {};
+  let untranslatedCount = 0; // 新增：未翻译文本计数器
   
   // 检查目录是否存在
   if (!fs.existsSync(dir)) {
@@ -48,10 +49,18 @@ function readAndMergeJsonFiles(dir: string): Record<string, string> {
         // 转换key为小写并检测冲突
         Object.entries(jsonData).forEach(([key, value]) => {
           const lowerKey = key.toLowerCase();
+          const stringValue = String(value);
+          
+          // 新增：检查key是否等于value
+          if (lowerKey === stringValue) {
+            untranslatedCount++;
+            return; // 跳过这条未翻译的条目
+          }
+          
           if (lowerCaseData[lowerKey]) {
             console.warn(`文件 ${file} 中存在重复键（转换为小写后）: ${key} -> ${lowerKey}，后者将覆盖前者`);
           }
-          lowerCaseData[lowerKey] = String(value);
+          lowerCaseData[lowerKey] = stringValue;
         });
         
         // 合并到结果对象并检测跨文件冲突
@@ -68,7 +77,9 @@ function readAndMergeJsonFiles(dir: string): Record<string, string> {
       }
     }
   });
-
+  
+  // 新增：输出未翻译文本数量
+  console.log(`共移除 ${untranslatedCount} 条未翻译文本（key等于value）`);
   return merged;
 }
 
