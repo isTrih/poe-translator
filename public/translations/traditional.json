@@ -134,7 +134,6 @@
   "profit/h": "利潤/小時",
   "author": "作者",
   "t# alch&go beast/svalinn hunting": "T# 點金即刷 狩獵野獸/斯瓦林",
-  "#d": "#神",
   "alva+beyond t# dunes updated pob": "阿爾瓦+超越 T# 暮色沙丘 更新POB",
   "t# divination of plenty": "T# 豐饒預言",
   "t# mirror hunting": "T# 狩獵鏡子",
@@ -204,5 +203,5 @@
   "a day ago": "1 天前",
   "tuesday, jul # #:# pm": "星期二, 7月# #:# 下午",
   "total price:": "總計價格:",
-  "url_version": "1.0.3 TC hotfix-2"
+  "url_version": "1.0.3 TC hotfix-3"
 }
