@@ -198,15 +198,19 @@ async function loadTranslations(lang: string): Promise<TranslationMap> {
 
     // 检查本地缓存
     const cacheKey = `translations_${lang}`;
-    const cachedData = await browser.storage.local.get(cacheKey);
-    if (cachedData[cacheKey]) {
+    const cacheTimeKey = `translations_${lang}_timestamp`;
+    const cachedData = await browser.storage.local.get([cacheKey, cacheTimeKey]);
+    const now = Date.now();
+    const thirtyMinutesInMs = 30 * 60 * 1000;
+
+    if (cachedData[cacheKey] && cachedData[cacheTimeKey] && (now - cachedData[cacheTimeKey]) < thirtyMinutesInMs) {
       console.log(`使用缓存的${lang}翻译数据`);
       // 从缓存中提取版本信息
       translationVersion = cachedData[cacheKey].url_version || null;
       return cachedData[cacheKey];
     }
 
-    // 缓存未命中，从网络加载
+    // 缓存未命中或已过期，从网络加载
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`加载翻译文件失败: ${response.statusText}`);
@@ -215,8 +219,11 @@ async function loadTranslations(lang: string): Promise<TranslationMap> {
     const translations = await response.json() as TranslationMap;
     // 提取并保存版本信息
     translationVersion = translations.url_version || null;
-    // 保存到本地缓存（永久有效）
-    await browser.storage.local.set({ [cacheKey]: translations });
+    // 保存到本地缓存并记录缓存时间
+    await browser.storage.local.set({
+      [cacheKey]: translations,
+      [cacheTimeKey]: now
+    });
     console.log(`已缓存${lang}翻译数据，版本: ${translationVersion}`);
 
     return translations;
@@ -329,7 +336,16 @@ function translatePage(lang: 'simplified' | 'traditional', cachedTranslations: T
         console.debug(`翻译成功 [${lang}]:`, originalText, '->', translatedText);
       } else {
         console.debug(`未找到翻译，准备保存原始文本:`, originalText);
-        saveUntranslatedText(trimmedText).catch(error => {
+        // 如果有数字需要还原，进行还原操作
+        let restoredText = trimmedText;
+        if (hasNumbers) {
+          restoredText = processedText;
+        }
+        // 恢复特殊模式
+        if (specialPattern) {
+          restoredText = modifiedText;
+        }
+        saveUntranslatedText(restoredText).catch(error => {
           console.error('保存未翻译文本时出错:', error);
         });
       }
@@ -371,7 +387,15 @@ function translatePage(lang: 'simplified' | 'traditional', cachedTranslations: T
             console.debug(`翻译成功 [${lang}]:`, placeholder, '->', translatedValue);
           } else {
             console.debug(`未找到翻译，准备保存原始文本:`, placeholder);
-            saveUntranslatedText(trimmedPlaceholder).catch((error: unknown) => {
+            let restoredText = trimmedPlaceholder;
+            if (hasNumbers) {
+              restoredText = processedText;
+            }
+            // 恢复特殊模式
+            if (placeholderSpecialPattern) {
+              restoredText = placeholderModifiedText;
+            }
+            saveUntranslatedText(restoredText).catch((error: unknown) => {
               console.error('保存未翻译文本时出错:', error);
             });
           }
@@ -540,9 +564,10 @@ function createFloatingBall() {
   // 状态指示小球 - 改为常显示并添加脉冲动画
   const statusBall = document.createElement('div');
   statusBall.id = 'poe-translator-status-ball';
-  // 增强视觉效果：添加脉冲动画和边框
-  statusBall.className = 'w-5 h-5 rounded-full bg-green-500 border-2 border-white shadow-md absolute top-[-5px] right-[-5px] flex items-center justify-center text-xs animate-pulse';
-  statusBall.textContent = '✅';
+  // 增强视觉效果：添加脉冲动画和边框 - 移除硬编码的bg-green-500
+  statusBall.className = 'w-5 h-5 rounded-full border-2 border-white shadow-md absolute top-[-5px] right-[-5px] flex items-center justify-center text-xs animate-pulse';
+  // 移除初始文本设置，由updateStatusBall统一控制
+  // statusBall.textContent = '✅';
 
   // 组合元素 - 移除面板容器
   mainBall.appendChild(statusBall);
@@ -561,6 +586,7 @@ async function initFloatingBall() {
 
   // 加载翻译启用状态
   const { translationEnabled = true } = await browser.storage.local.get('translationEnabled');
+  console.log('翻译启用状态:', translationEnabled);
   updateStatusBall(statusBall, translationEnabled);
 
   // 创建统一的切换翻译状态函数
@@ -765,9 +791,9 @@ async function checkVersionUpdate(statusBall: HTMLElement) {
 
     } else {
       // 版本已是最新，显示正常状态
-      statusBall.textContent = '✓';
-      statusBall.style.backgroundColor = 'rgba(0, 255, 0, 0.3)';
-      statusBall.title = `当前已是最新版本 (${localVersion})`;
+      // statusBall.textContent = '✓';
+      // statusBall.style.backgroundColor = 'rgba(0, 255, 0, 0.3)';
+      // statusBall.title = `当前已是最新版本 (${localVersion})`;
     }
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);

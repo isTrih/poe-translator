@@ -46,6 +46,11 @@ bun run build
 # 构建翻译文件
 bun run build:translations
 ```
+### 打包扩展
+```bash
+# 打包扩展
+bun run zip
+```
 ### 浏览器加载
 1. 构建完成后，在浏览器中打开扩展管理页面
 2. 启用"开发者模式"

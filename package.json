@@ -11,10 +11,10 @@
     "build:firefox": "wxt build -b firefox",
     "build:translations": "bun run utils/trans/buildTranslations.ts",
     "build:hotfix": "bun run utils/trans/buildHotfix.ts",
-    "zip": "wxt zip",
-    "zip:firefox": "wxt zip -b firefox",
+    "zip": "wxt zip -b safari && wxt zip -b edge && wxt zip -b chrome && wxt zip -b firefox",
     "compile": "vue-tsc --noEmit",
-    "postinstall": "wxt prepare"
+    "preinstall": "node ./scripts/check-pm.js",
+    "postinstall": "echo \"\u001b[32m依赖安装成功，已使用Bun作为包管理器\u001b[0m\"&&wxt prepare"
   },
   "dependencies": {
     "vue": "^3.5.13"
@@ -29,5 +29,6 @@
     "vite-plugin-remove-console": "^2.2.0",
     "vue-tsc": "^2.2.10",
     "wxt": "^0.20.7"
-  }
+  },
+  "__npminstall_done": false
 }
