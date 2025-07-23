@@ -41,7 +41,11 @@ bun run dev
 # 构建扩展
 bun run build
 ```
-
+### 构建翻译文件
+```bash
+# 构建翻译文件
+bun run build:translations
+```
 ### 浏览器加载
 1. 构建完成后，在浏览器中打开扩展管理页面
 2. 启用"开发者模式"
@@ -86,13 +90,3 @@ bun run build
 - 支持作者: <mcurl name="爱发电" url="https://afdian.tv/a/istrih"></mcurl>
 - 作者主页: <mcurl name="踩蘑菇" url="https://www.caimogu.cc/author/istrih"></mcurl>
 
-## 📝 更新日志
-### v1.0.0
-- 初始版本发布
-- 支持基本翻译功能
-- 实现暗黑破坏神风格UI
-
-### v1.1.0
-- 增加翻译缓存功能
-- 优化界面响应速度
-- 修复若干bug
