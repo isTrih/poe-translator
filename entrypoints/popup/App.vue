@@ -298,6 +298,55 @@ onMounted(async () => {
   await fetchConfigVersion();
   await checkForUpdates(); // 添加版本检查
 });
+
+/**
+ * 下载当前网站的未翻译文本文件
+ */
+async function downloadUntranslated() {
+  try {
+    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+    if (!tab.id) {
+      alert('无法获取当前标签页');
+      return;
+    }
+    
+    const response = await browser.tabs.sendMessage(tab.id, { action: 'downloadUntranslated' });
+    const untranslatedData = response?.data || {};
+    
+    if (Object.keys(untranslatedData).length === 0) {
+      alert('没有未翻译的文本');
+      return;
+    }
+    
+    // 获取当前域名并生成文件名
+    const url = new URL(tab.url || 'https://unknown.com');
+    const domain = url.hostname.replace(/^www\./, '');
+    const fileName = `UN_${domain}.json`;
+    
+    // 构建JSON数据
+    const jsonData = JSON.stringify({ [fileName]: untranslatedData }, null, 2);
+    
+    // 创建下载链接
+    const blob = new Blob([jsonData], { type: 'application/json' });
+    const urlObject = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = urlObject;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    
+    // 清理
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(urlObject);
+    }, 0);
+    
+  } catch (error) {
+    console.error('下载未翻译文本失败:', error);
+    alert('下载失败，请重试');
+  }
+}
 </script>
 
 <template>
@@ -389,7 +438,7 @@ onMounted(async () => {
       <a href="https://github.com/isTrih/poe-translator" target="_blank"
         class="hover:text-amber-400 transition-colors">项目Github</a>
     </p>
-    <p class="text-xs text-red-500/80 mb-2.5 text-center"> 三氢超正经©copyright </p>
+    <p class="text-xs text-red-500/80 mb-2.5 text-center" @click="downloadUntranslated">三氢超正经©copyright</p>
   </div>
 </template>
 
@@ -399,3 +448,4 @@ onMounted(async () => {
   text-shadow: 0 0 5px rgba(180, 0, 0, 0.7), 0 0 2px rgba(255, 215, 0, 0.5);
 }
 </style>
+

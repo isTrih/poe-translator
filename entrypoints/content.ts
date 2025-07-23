@@ -1,6 +1,181 @@
-import { TranslationMap } from '../utils/translationMap';
+import { translationMaps } from '../utils/trans/translationMap';
+import { TranslationMap } from '../utils/trans/types';
 import "~/assets/tailwind.css";
+/**
+ * IndexedDB存储相关类型定义
+ */
+interface UntranslatedEntry {
+  domain: string;
+  entries: Record<string, string>;
+}
 
+/**
+ * IndexedDB相关常量
+ */
+const DB_NAME = 'poeTranslatorDB';
+const STORE_NAME = 'untranslated';
+const DB_VERSION = 1;
+
+/**
+ * 内容过滤正则表达式
+ */
+const HAS_CHINESE_REGEX = /[\u4e00-\u9fa5]/;
+const HAS_LETTER_REGEX = /[a-zA-Z]/;
+const ONLY_SYMBOLS_REGEX = /^[^a-zA-Z0-9]+$/;
+
+/**
+ * 检查文本是否符合保存条件
+ * @param text 待检查文本
+ * @returns 是否应该保存
+ */
+function shouldSaveText(text: string): boolean {
+  // 过滤空文本
+  if (!text.trim()) {
+    console.debug('过滤空文本:', text);
+    return false;
+  }
+
+  // 过滤包含中文的文本
+  if (HAS_CHINESE_REGEX.test(text)) {
+    console.debug('过滤含中文文本:', text);
+    return false;
+  }
+
+  // 过滤纯符号/无字母文本
+  if (!HAS_LETTER_REGEX.test(text) || ONLY_SYMBOLS_REGEX.test(text)) {
+    console.debug('过滤纯符号/无字母文本:', text);
+    return false;
+  }
+
+  console.debug('文本通过过滤:', text);
+  return true;
+}
+
+/**
+ * 打开IndexedDB数据库
+ * @returns 数据库实例Promise
+ */
+async function openDB(): Promise<IDBDatabase> {
+  console.debug('打开IndexedDB数据库...');
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onupgradeneeded = (event) => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        console.debug('创建对象存储:', STORE_NAME);
+        db.createObjectStore(STORE_NAME, { keyPath: 'domain' });
+      }
+    };
+
+    request.onsuccess = () => {
+      console.debug('数据库打开成功');
+      resolve(request.result);
+    };
+    request.onerror = () => {
+      console.error('数据库打开失败:', request.error);
+      reject(request.error);
+    };
+  });
+}
+
+/**
+ * 清除所有未翻译缓存
+ */
+async function clearUntranslatedCache(): Promise<void> {
+  try {
+    console.debug('开始清除未翻译缓存...');
+    const db = await openDB();
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    await store.clear();
+    console.debug('未翻译缓存已清除');
+  } catch (error) {
+    console.error('清除未翻译缓存失败:', error);
+  }
+}
+
+/**
+ * 保存未翻译文本到IndexedDB
+ * @param originalText 原始文本（trimmedText）
+ */
+async function saveUntranslatedText(originalText: string): Promise<void> {
+  try {
+    // 添加环境检测
+    if (typeof window === 'undefined' || !window.indexedDB) {
+      console.warn('IndexedDB环境不可用，跳过保存');
+      return;
+    }
+
+    // 应用内容过滤
+    if (!shouldSaveText(originalText)) {
+      return;
+    }
+
+    const domain = window.location.hostname.replace(/^www\./, '');
+    console.debug(`准备保存未翻译文本 [${domain}]:`, originalText);
+
+    const db = await openDB();
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+
+    // 修复：正确处理IDBRequest异步结果
+    const request = store.get(domain);
+    const entry: UntranslatedEntry | undefined = await new Promise((resolve) => {
+      request.onsuccess = () => resolve(request.result as UntranslatedEntry | undefined);
+      request.onerror = () => resolve(undefined);
+    });
+
+    if (!entry) {
+      console.debug('创建新的域名存储记录:', domain);
+      await store.add({ domain, entries: { [originalText]: '' } });
+    } else {
+      // 避免重复保存
+      if (!(originalText in entry.entries)) {
+        entry.entries[originalText] = '';
+        await store.put(entry);
+        console.debug('未翻译文本保存成功:', originalText);
+      } else {
+        console.debug('文本已存在，跳过保存:', originalText);
+      }
+    }
+  } catch (error) {
+    console.error('保存未翻译文本失败:', error);
+  }
+}
+
+/**
+ * 获取特定域名的未翻译文本
+ * @param domain 域名
+ * @returns 未翻译文本对象Promise
+ */
+async function getUntranslatedText(domain: string): Promise<UntranslatedEntry | null> {
+  try {
+    // 添加环境检测
+    if (typeof window === 'undefined' || !window.indexedDB) {
+      console.warn('IndexedDB环境不可用，无法获取数据');
+      return null;
+    }
+
+    console.debug(`获取域名未翻译文本:`, domain);
+    const db = await openDB();
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const store = tx.objectStore(STORE_NAME);
+
+    // 修复：正确处理IDBRequest异步结果
+    const request = store.get(domain);
+    const entry: UntranslatedEntry | null = await new Promise((resolve) => {
+      request.onsuccess = () => resolve(request.result as UntranslatedEntry | null);
+      request.onerror = () => resolve(null);
+    });
+
+    console.debug(`获取域名未翻译文本成功，共${entry?.entries ? Object.keys(entry.entries).length : 0}条记录`);
+    return entry;
+  } catch (error) {
+    console.error('获取未翻译文本失败:', error);
+    return null;
+  }
+}
 // 添加缺失的变量声明
 // 移除重复声明，下方已有变量定义
 let translationVersion: string | null = null;
@@ -111,8 +286,8 @@ function translatePage(lang: 'simplified' | 'traditional', cachedTranslations: T
 
   const walk = (node: Node) => {
     // 仅处理文本节点，排除脚本和样式标签
-    if (node.nodeType === Node.TEXT_NODE && node.textContent && 
-        node.parentNode?.nodeName !== 'SCRIPT' && node.parentNode?.nodeName !== 'STYLE') {
+    if (node.nodeType === Node.TEXT_NODE && node.textContent &&
+      node.parentNode?.nodeName !== 'SCRIPT' && node.parentNode?.nodeName !== 'STYLE') {
       // 第一步：读取DOM中的文字内容
       const originalText = node.textContent;
       // 第二步：去除首尾空格作为key，并转换为小写
@@ -151,6 +326,12 @@ function translatePage(lang: 'simplified' | 'traditional', cachedTranslations: T
         const translatedText = leadingSpaces + translatedValue + trailingSpaces;
         // 更新文本内容
         node.textContent = translatedText;
+        console.debug(`翻译成功 [${lang}]:`, originalText, '->', translatedText);
+      } else {
+        console.debug(`未找到翻译，准备保存原始文本:`, originalText);
+        saveUntranslatedText(trimmedText).catch(error => {
+          console.error('保存未翻译文本时出错:', error);
+        });
       }
     }
 
@@ -187,6 +368,12 @@ function translatePage(lang: 'simplified' | 'traditional', cachedTranslations: T
               translatedValue += placeholderSpecialPattern;
             }
             inputElement.placeholder = translatedValue;
+            console.debug(`翻译成功 [${lang}]:`, placeholder, '->', translatedValue);
+          } else {
+            console.debug(`未找到翻译，准备保存原始文本:`, placeholder);
+            saveUntranslatedText(trimmedPlaceholder).catch((error: unknown) => {
+              console.error('保存未翻译文本时出错:', error);
+            });
           }
         }
       }
@@ -207,7 +394,7 @@ async function initTranslation() {
     // console.log('从存储获取的语言设置:', storageResult);
     const { language = 'traditional' } = storageResult;
     // console.log('最终使用的语言设置:', language);
-    
+
     // 加载翻译文件
     const translations = await loadTranslations(language);
     translatePage(language as 'simplified' | 'traditional', translations);
@@ -327,21 +514,21 @@ function createFloatingBall() {
   container.style.cssText = `
     position: fixed; bottom: 20px; right: 20px; z-index: 999999; cursor: pointer;
   `;
-  
+
   // 主悬浮球
   const mainBall = document.createElement('div');
   mainBall.id = 'poe-translator-main-ball';
   // 增强视觉效果：增大尺寸、增强阴影、添加hover动画
   mainBall.className = 'w-12 h-12 rounded-full bg-cover shadow-lg shadow-blue-500/30 border-2 border-blue-500 bg-white bg-opacity-20 transition-all duration-300 relative hover:scale-110 hover:shadow-xl';
   mainBall.style.backgroundImage = `url('${browser.runtime.getURL('/icon.png')}')`;
-  
+
   // 添加hover提示框
   const tooltip = document.createElement('div');
   // 将bottom改为top-full并添加margin-top，确保提示框显示在悬浮球下方
   tooltip.className = 'absolute bottom-12px right-6px transform -translate-x-1/2 bg-gray-800 text-white text-xs py-1 px-2 rounded opacity-0 transition-opacity duration-200 whitespace-nowrap mt-2';
   tooltip.textContent = '点击开关插件';
   mainBall.appendChild(tooltip);
-  
+
   // 添加hover事件监听
   mainBall.addEventListener('mouseover', () => {
     tooltip.style.opacity = '1';
@@ -349,19 +536,19 @@ function createFloatingBall() {
   mainBall.addEventListener('mouseout', () => {
     tooltip.style.opacity = '0';
   });
-  
+
   // 状态指示小球 - 改为常显示并添加脉冲动画
   const statusBall = document.createElement('div');
   statusBall.id = 'poe-translator-status-ball';
   // 增强视觉效果：添加脉冲动画和边框
   statusBall.className = 'w-5 h-5 rounded-full bg-green-500 border-2 border-white shadow-md absolute top-[-5px] right-[-5px] flex items-center justify-center text-xs animate-pulse';
   statusBall.textContent = '✅';
-  
+
   // 组合元素 - 移除面板容器
   mainBall.appendChild(statusBall);
   container.appendChild(mainBall);
   document.body.appendChild(container);
-  
+
   return { container, mainBall, statusBall };
 }
 
@@ -370,40 +557,40 @@ function createFloatingBall() {
  * 初始化悬浮球功能
  */
 async function initFloatingBall() {
-    const { mainBall, statusBall } = createFloatingBall();
-    
-    // 加载翻译启用状态
+  const { mainBall, statusBall } = createFloatingBall();
+
+  // 加载翻译启用状态
+  const { translationEnabled = true } = await browser.storage.local.get('translationEnabled');
+  updateStatusBall(statusBall, translationEnabled);
+
+  // 创建统一的切换翻译状态函数
+  const toggleTranslation = async () => {
+    // 检查是否正在拖动，如果是则不执行切换        
     const { translationEnabled = true } = await browser.storage.local.get('translationEnabled');
-    updateStatusBall(statusBall, translationEnabled);
-    
-    // 创建统一的切换翻译状态函数
-    const toggleTranslation = async () => {
-        // 检查是否正在拖动，如果是则不执行切换        
-        const { translationEnabled = true } = await browser.storage.local.get('translationEnabled');
-        const newState = !translationEnabled;
-        
-        // 先更新状态球显示（给用户即时反馈）
-        updateStatusBall(statusBall, newState);
-        
-        // 再更新存储状态
-        await browser.storage.local.set({ translationEnabled: newState });
-        
-        // 刷新页面使更改生效
-        window.location.reload();
-    };
-    
-    // 添加版本更新检查
-    checkVersionUpdate(statusBall);
-    
-    // 更新状态球显示的辅助函数
-    function updateStatusBall(ball: HTMLElement, enabled: boolean) {
-        ball.textContent = enabled ? '✅' : '❌';
-        ball.style.backgroundColor = enabled ? 'rgba(0,255,0,0.7)' : 'rgba(255,0,0,0.7)';
-    }
-    
-    // 为主球和状态球添加点击事件监听
-    mainBall.addEventListener('click', toggleTranslation);
-    statusBall.addEventListener('click', toggleTranslation);
+    const newState = !translationEnabled;
+
+    // 先更新状态球显示（给用户即时反馈）
+    updateStatusBall(statusBall, newState);
+
+    // 再更新存储状态
+    await browser.storage.local.set({ translationEnabled: newState });
+
+    // 刷新页面使更改生效
+    window.location.reload();
+  };
+
+  // 添加版本更新检查
+  checkVersionUpdate(statusBall);
+
+  // 更新状态球显示的辅助函数
+  function updateStatusBall(ball: HTMLElement, enabled: boolean) {
+    ball.textContent = enabled ? '✅' : '❌';
+    ball.style.backgroundColor = enabled ? 'rgba(0,255,0,0.7)' : 'rgba(255,0,0,0.7)';
+  }
+
+  // 为主球和状态球添加点击事件监听
+  mainBall.addEventListener('click', toggleTranslation);
+  statusBall.addEventListener('click', toggleTranslation);
 }
 
 /**
@@ -411,7 +598,7 @@ async function initFloatingBall() {
  */
 async function initializeTranslationIfEnabled() {
   const { translationEnabled = true } = await browser.storage.local.get('translationEnabled');
-  
+
   if (translationEnabled) {
     // 页面加载完成后执行翻译和元素替换
     if (document.readyState === 'loading') {
@@ -504,25 +691,38 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return true;
 });
 
+// 扩展消息监听器以支持未翻译文本下载
+browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // ... existing code ...
+  if (message.action === 'downloadUntranslated') {
+    const domain = window.location.hostname.replace(/^www\./, '');
+    getUntranslatedText(domain).then(entry => {
+      sendResponse({ data: entry?.entries || {} });
+    });
+    return true; // 保持消息通道开放
+  }
+  return true;
+});
+
 /**
  * 获取应用版本号（从version.json读取）
  * @returns 版本号字符串
  */
 async function getAppVersion(): Promise<string> {
-    try {
-        // 使用runtime.getURL获取扩展内部资源路径
-        const response = await fetch(browser.runtime.getURL('/version.json'), {
-            cache: 'no-store',
-            headers: {
-                'Cache-Control': 'no-cache'
-            }
-        });
-        const versionData = await response.json();
-        return versionData.version || '1.0.0';
-    } catch (error) {
-        console.error('读取版本文件失败:', error);
-        return '1.0.0';
-    }
+  try {
+    // 使用runtime.getURL获取扩展内部资源路径
+    const response = await fetch(browser.runtime.getURL('/version.json'), {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache'
+      }
+    });
+    const versionData = await response.json();
+    return versionData.version || '1.0.0';
+  } catch (error) {
+    console.error('读取版本文件失败:', error);
+    return '1.0.0';
+  }
 }
 
 /**
@@ -530,54 +730,54 @@ async function getAppVersion(): Promise<string> {
  * @param statusBall 状态球DOM元素，用于显示版本检查状态
  */
 async function checkVersionUpdate(statusBall: HTMLElement) {
-    try {
-        const localVersion = await getAppVersion();
-        console.log(`[版本检查] 本地版本: ${localVersion}，请求远程版本...`);
-        
-        const response = await browser.runtime.sendMessage({
-            action: 'checkVersion'
-        });
-        
-        console.log('[版本检查] 收到background响应:', response);
-        
-        // 添加响应有效性检查
-        if (!response) {
-            throw new Error('未收到响应数据');
-        }
-        
-        if (!response.success) {
-            throw new Error(`版本请求失败: ${response.error || '未知错误'}`);
-        }
-        
-        const remoteVersion = response.version;
-        console.log(`[版本检查] 远程版本: ${remoteVersion}，来源: ${response.source || '直接请求'}`);
-        
-        // 比较版本号并显示更新提示
-        if (isNewVersionAvailable(localVersion, remoteVersion)) {
-             // 创建版本更新通知框（使用Tailwind CSS类）
-            const updateNotification = document.createElement('div');
-            updateNotification.className = 'fixed top-5 right-5 bg-blue-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-pulse z-9999';
-            updateNotification.innerHTML = `
+  try {
+    const localVersion = await getAppVersion();
+    console.log(`[版本检查] 本地版本: ${localVersion}，请求远程版本...`);
+
+    const response = await browser.runtime.sendMessage({
+      action: 'checkVersion'
+    });
+
+    console.log('[版本检查] 收到background响应:', response);
+
+    // 添加响应有效性检查
+    if (!response) {
+      throw new Error('未收到响应数据');
+    }
+
+    if (!response.success) {
+      throw new Error(`版本请求失败: ${response.error || '未知错误'}`);
+    }
+
+    const remoteVersion = response.version;
+    console.log(`[版本检查] 远程版本: ${remoteVersion}，来源: ${response.source || '直接请求'}`);
+
+    // 比较版本号并显示更新提示
+    if (isNewVersionAvailable(localVersion, remoteVersion)) {
+      // 创建版本更新通知框（使用Tailwind CSS类）
+      const updateNotification = document.createElement('div');
+      updateNotification.className = 'fixed top-5 right-5 bg-blue-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-pulse z-9999';
+      updateNotification.innerHTML = `
                 <span>插件有新版本可用！</span>
                 <a href="https://github.com/isTrih/poe-translator/releases" target="_blank" class="underline hover:text-blue-200 transition-colors">前去下载</a>
             `;
-            document.body.appendChild(updateNotification);
-            
-        } else {
-            // 版本已是最新，显示正常状态
-            statusBall.textContent = '✓';
-            statusBall.style.backgroundColor = 'rgba(0, 255, 0, 0.3)';
-            statusBall.title = `当前已是最新版本 (${localVersion})`;
-        }
-    } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        console.error(`[版本检查] 完整错误: ${error}`);
-        
-        // 显示错误状态
-        statusBall.textContent = '⚠️';
-        statusBall.title = `版本检查失败: ${errorMsg}`;
-        statusBall.style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
+      document.body.appendChild(updateNotification);
+
+    } else {
+      // 版本已是最新，显示正常状态
+      statusBall.textContent = '✓';
+      statusBall.style.backgroundColor = 'rgba(0, 255, 0, 0.3)';
+      statusBall.title = `当前已是最新版本 (${localVersion})`;
     }
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error(`[版本检查] 完整错误: ${error}`);
+
+    // 显示错误状态
+    statusBall.textContent = '⚠️';
+    statusBall.title = `版本检查失败: ${errorMsg}`;
+    statusBall.style.backgroundColor = 'rgba(255, 0, 0, 0.3)';
+  }
 }
 
 /**
@@ -587,18 +787,18 @@ async function checkVersionUpdate(statusBall: HTMLElement) {
  * @returns 是否有更新
  */
 function isNewVersionAvailable(currentVersion: string, newVersion: string): boolean {
-    const currentParts = currentVersion.split('.').map(Number);
-    const newParts = newVersion.split('.').map(Number);
-    
-    for (let i = 0; i < Math.max(currentParts.length, newParts.length); i++) {
-        const current = currentParts[i] || 0;
-        const newPart = newParts[i] || 0;
-        
-        if (newPart > current) return true;
-        if (newPart < current) return false;
-    }
-    
-    return false; // 版本相同
+  const currentParts = currentVersion.split('.').map(Number);
+  const newParts = newVersion.split('.').map(Number);
+
+  for (let i = 0; i < Math.max(currentParts.length, newParts.length); i++) {
+    const current = currentParts[i] || 0;
+    const newPart = newParts[i] || 0;
+
+    if (newPart > current) return true;
+    if (newPart < current) return false;
+  }
+
+  return false; // 版本相同
 }
 
 // 确保默认导出在文件末尾，且不在任何条件语句内
@@ -608,10 +808,12 @@ export default defineContentScript({
   main() {
     document.documentElement.setAttribute('translate', 'no');
     document.documentElement.setAttribute('lang', 'zh_cn');
-
+    clearUntranslatedCache().catch(error => {
+      console.error('清除未翻译缓存失败:', error);
+    });
     // 初始化悬浮球（无论翻译是否启用都需要显示）
     initFloatingBall();
-    
+
     // 初始化翻译功能（根据启用状态决定）
     initializeTranslationIfEnabled();
   }
