@@ -31,23 +31,23 @@ const ONLY_SYMBOLS_REGEX = /^[^a-zA-Z0-9]+$/;
 function shouldSaveText(text: string): boolean {
   // 过滤空文本
   if (!text.trim()) {
-    console.debug("过滤空文本:", text);
+    // console.debug("过滤空文本:", text);
     return false;
   }
 
   // 过滤包含中文的文本
   if (HAS_CHINESE_REGEX.test(text)) {
-    console.debug("过滤含中文文本:", text);
+    // console.debug("过滤含中文文本:", text);
     return false;
   }
 
   // 过滤纯符号/无字母文本
   if (!HAS_LETTER_REGEX.test(text) || ONLY_SYMBOLS_REGEX.test(text)) {
-    console.debug("过滤纯符号/无字母文本:", text);
+    // console.debug("过滤纯符号/无字母文本:", text);
     return false;
   }
 
-  console.debug("文本通过过滤:", text);
+  // console.debug("文本通过过滤:", text);
   return true;
 }
 
@@ -56,24 +56,24 @@ function shouldSaveText(text: string): boolean {
  * @returns 数据库实例Promise
  */
 async function openDB(): Promise<IDBDatabase> {
-  console.debug("打开IndexedDB数据库...");
+  // console.debug("打开IndexedDB数据库...");
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
     request.onupgradeneeded = (event) => {
       const db = request.result;
       if (!db.objectStoreNames.contains(STORE_NAME)) {
-        console.debug("创建对象存储:", STORE_NAME);
+        // console.debug("创建对象存储:", STORE_NAME);
         db.createObjectStore(STORE_NAME, { keyPath: "domain" });
       }
     };
 
     request.onsuccess = () => {
-      console.debug("数据库打开成功");
+      // console.debug("数据库打开成功");
       resolve(request.result);
     };
     request.onerror = () => {
-      console.error("数据库打开失败:", request.error);
+      // console.error("数据库打开失败:", request.error);
       reject(request.error);
     };
   });
@@ -84,14 +84,14 @@ async function openDB(): Promise<IDBDatabase> {
  */
 async function clearUntranslatedCache(): Promise<void> {
   try {
-    console.debug("开始清除未翻译缓存...");
+    // console.debug("开始清除未翻译缓存...");
     const db = await openDB();
     const tx = db.transaction(STORE_NAME, "readwrite");
     const store = tx.objectStore(STORE_NAME);
     await store.clear();
-    console.debug("未翻译缓存已清除");
+    // console.debug("未翻译缓存已清除");
   } catch (error) {
-    console.error("清除未翻译缓存失败:", error);
+    // console.error("清除未翻译缓存失败:", error);
   }
 }
 
@@ -103,7 +103,7 @@ async function saveUntranslatedText(originalText: string): Promise<void> {
   try {
     // 添加环境检测
     if (typeof window === "undefined" || !window.indexedDB) {
-      console.warn("IndexedDB环境不可用，跳过保存");
+      // console.warn("IndexedDB环境不可用，跳过保存");
       return;
     }
 
@@ -113,7 +113,7 @@ async function saveUntranslatedText(originalText: string): Promise<void> {
     }
 
     const domain = window.location.hostname.replace(/^www\./, "");
-    console.debug(`准备保存未翻译文本 [${domain}]:`, originalText);
+    // console.debug(`准备保存未翻译文本 [${domain}]:`, originalText);
 
     const db = await openDB();
     const tx = db.transaction(STORE_NAME, "readwrite");
@@ -130,20 +130,20 @@ async function saveUntranslatedText(originalText: string): Promise<void> {
     );
 
     if (!entry) {
-      console.debug("创建新的域名存储记录:", domain);
+      // console.debug("创建新的域名存储记录:", domain);
       await store.add({ domain, entries: { [originalText]: "" } });
     } else {
       // 避免重复保存
       if (!(originalText in entry.entries)) {
         entry.entries[originalText] = "";
         await store.put(entry);
-        console.debug("未翻译文本保存成功:", originalText);
+        // console.debug("未翻译文本保存成功:", originalText);
       } else {
-        console.debug("文本已存在，跳过保存:", originalText);
+        // console.debug("文本已存在，跳过保存:", originalText);
       }
     }
   } catch (error) {
-    console.error("保存未翻译文本失败:", error);
+    // console.error("保存未翻译文本失败:", error);
   }
 }
 
@@ -158,11 +158,11 @@ async function getUntranslatedText(
   try {
     // 添加环境检测
     if (typeof window === "undefined" || !window.indexedDB) {
-      console.warn("IndexedDB环境不可用，无法获取数据");
+      // console.warn("IndexedDB环境不可用，无法获取数据");
       return null;
     }
 
-    console.debug(`获取域名未翻译文本:`, domain);
+    // console.debug(`获取域名未翻译文本:`, domain);
     const db = await openDB();
     const tx = db.transaction(STORE_NAME, "readonly");
     const store = tx.objectStore(STORE_NAME);
@@ -175,14 +175,14 @@ async function getUntranslatedText(
       request.onerror = () => resolve(null);
     });
 
-    console.debug(
-      `获取域名未翻译文本成功，共${
-        entry?.entries ? Object.keys(entry.entries).length : 0
-      }条记录`
-    );
+    // console.debug(
+    //   `获取域名未翻译文本成功，共${
+    //     entry?.entries ? Object.keys(entry.entries).length : 0
+    //   }条记录`
+    // );
     return entry;
   } catch (error) {
-    console.error("获取未翻译文本失败:", error);
+    // console.error("获取未翻译文本失败:", error);
     return null;
   }
 }
@@ -225,7 +225,7 @@ async function loadTranslations(lang: string): Promise<TranslationMap> {
       cachedData[cacheTimeKey] &&
       now - cachedData[cacheTimeKey] < thirtyMinutesInMs
     ) {
-      console.log(`使用缓存的${lang}翻译数据`);
+      // console.log(`使用缓存的${lang}翻译数据`);
       // 从缓存中提取版本信息
       translationVersion = cachedData[cacheKey].url_version || null;
       return cachedData[cacheKey];
@@ -245,11 +245,11 @@ async function loadTranslations(lang: string): Promise<TranslationMap> {
       [cacheKey]: translations,
       [cacheTimeKey]: now,
     });
-    console.log(`已缓存${lang}翻译数据，版本: ${translationVersion}`);
+    // console.log(`已缓存${lang}翻译数据，版本: ${translationVersion}`);
 
     return translations;
   } catch (error) {
-    console.error(`加载${lang}翻译失败:`, error);
+    // console.error(`加载${lang}翻译失败:`, error);
     throw error;
   }
 }
@@ -366,14 +366,14 @@ function translatePage(
         const translatedText = leadingSpaces + translatedValue + trailingSpaces;
         // 更新文本内容
         node.textContent = translatedText;
-        console.debug(
-          `翻译成功 [${lang}]:`,
-          originalText,
-          "->",
-          translatedText
-        );
+        // console.debug(
+        //   `翻译成功 [${lang}]:`,
+        //   originalText,
+        //   "->",
+        //   translatedText
+        // );
       } else {
-        console.debug(`未找到翻译，准备保存原始文本:`, originalText);
+        // console.debug(`未找到翻译，准备保存原始文本:`, originalText);
         // 如果有数字需要还原，进行还原操作
         let restoredText = trimmedText;
         if (hasNumbers) {
@@ -384,7 +384,7 @@ function translatePage(
           restoredText = modifiedText;
         }
         saveUntranslatedText(restoredText).catch((error) => {
-          console.error("保存未翻译文本时出错:", error);
+          // console.error("保存未翻译文本时出错:", error);
         });
       }
     }
@@ -433,14 +433,14 @@ function translatePage(
               translatedValue += placeholderSpecialPattern;
             }
             inputElement.placeholder = translatedValue;
-            console.debug(
-              `翻译成功 [${lang}]:`,
-              placeholder,
-              "->",
-              translatedValue
-            );
+            // console.debug(
+            //   `翻译成功 [${lang}]:`,
+            //   placeholder,
+            //   "->",
+            //   translatedValue
+            // );
           } else {
-            console.debug(`未找到翻译，准备保存原始文本:`, placeholder);
+            // console.debug(`未找到翻译，准备保存原始文本:`, placeholder);
             let restoredText = trimmedPlaceholder;
             if (hasNumbers) {
               restoredText = processedText;
@@ -450,7 +450,7 @@ function translatePage(
               restoredText = placeholderModifiedText;
             }
             saveUntranslatedText(restoredText).catch((error: unknown) => {
-              console.error("保存未翻译文本时出错:", error);
+              // console.error("保存未翻译文本时出错:", error);
             });
           }
         }
@@ -477,7 +477,7 @@ async function initTranslation() {
     const translations = await loadTranslations(language);
     translatePage(language as "simplified" | "traditional", translations);
   } catch (error) {
-    console.error("翻译初始化失败，错误详情:", error);
+    // console.error("翻译初始化失败，错误详情:", error);
     // 出错时尝试加载默认语言
     try {
       const translations = await loadTranslations("traditional");
@@ -517,9 +517,9 @@ function removeFloatingBall() {
 
     // 从DOM中移除容器
     container.parentNode?.removeChild(container);
-    console.log("悬浮球已成功移除");
+    // console.log("悬浮球已成功移除");
   } else {
-    console.log("未找到悬浮球元素，无需移除");
+    // console.log("未找到悬浮球元素，无需移除");
   }
 }
 /**
@@ -530,11 +530,11 @@ async function ensureDefaultLanguageSetting() {
     const storageResult = await browser.storage.local.get("language");
     // 如果存储中没有语言设置，初始化默认值
     if (storageResult.language === undefined) {
-      console.log("初始化默认语言设置为简体中文");
+      // console.log("初始化默认语言设置为简体中文");
       await browser.storage.local.set({ language: "simplified" });
     }
   } catch (error) {
-    console.error("初始化语言设置失败:", error);
+    // console.error("初始化语言设置失败:", error);
   }
 }
 
@@ -684,7 +684,7 @@ async function initFloatingBall() {
   const { translationEnabled = true } = await browser.storage.local.get(
     "translationEnabled"
   );
-  console.log("翻译启用状态:", translationEnabled);
+  // console.log("翻译启用状态:", translationEnabled);
   updateStatusBall(statusBall, translationEnabled);
 
   // 创建统一的切换翻译状态函数
@@ -848,7 +848,7 @@ async function getAppVersion(): Promise<string> {
     const versionData = await response.json();
     return versionData.version || "1.0.0";
   } catch (error) {
-    console.error("读取版本文件失败:", error);
+    // console.error("读取版本文件失败:", error);
     return "1.0.0";
   }
 }
@@ -860,13 +860,13 @@ async function getAppVersion(): Promise<string> {
 async function checkVersionUpdate(statusBall: HTMLElement) {
   try {
     const localVersion = await getAppVersion();
-    console.log(`[版本检查] 本地版本: ${localVersion}，请求远程版本...`);
+    // console.log(`[版本检查] 本地版本: ${localVersion}，请求远程版本...`);
 
     const response = await browser.runtime.sendMessage({
       action: "checkVersion",
     });
 
-    console.log("[版本检查] 收到background响应:", response);
+    // console.log("[版本检查] 收到background响应:", response);
 
     // 添加响应有效性检查
     if (!response) {
@@ -878,11 +878,11 @@ async function checkVersionUpdate(statusBall: HTMLElement) {
     }
 
     const remoteVersion = response.version;
-    console.log(
-      `[版本检查] 远程版本: ${remoteVersion}，来源: ${
-        response.source || "直接请求"
-      }`
-    );
+    // console.log(
+    //   `[版本检查] 远程版本: ${remoteVersion}，来源: ${
+    //     response.source || "直接请求"
+    //   }`
+    // );
 
     // 比较版本号并显示更新提示
     if (isNewVersionAvailable(localVersion, remoteVersion)) {
@@ -903,7 +903,7 @@ async function checkVersionUpdate(statusBall: HTMLElement) {
     }
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
-    console.error(`[版本检查] 完整错误: ${error}`);
+    // console.error(`[版本检查] 完整错误: ${error}`);
 
     // 显示错误状态
     statusBall.textContent = "⚠️";
@@ -946,7 +946,7 @@ async function isExtensionEnabled(): Promise<boolean> {
     );
     return extensionEnabled !== false; // 默认启用
   } catch (error) {
-    console.error("检查扩展状态失败:", error);
+    // console.error("检查扩展状态失败:", error);
     return true; // 出错时默认启用
   }
 }
@@ -956,14 +956,14 @@ async function isExtensionEnabled(): Promise<boolean> {
  */
 async function initializeTranslationIfEnabled() {
   const enabled = await isExtensionEnabled();
-  console.log("扩展功能状态:", enabled ? "已启用" : "已禁用");
+  // console.log("扩展功能状态:", enabled ? "已启用" : "已禁用");
 
   if (enabled) {
     // 启用时执行翻译初始化
     // 初始化悬浮球（无论翻译是否启用都需要显示）
     initFloatingBall();
     initTranslation().catch((error) => {
-      console.error("翻译初始化失败:", error);
+      // console.error("翻译初始化失败:", error);
     });
   } else {
     // 禁用时清除可能的翻译效果
@@ -978,7 +978,7 @@ async function initializeTranslationIfEnabled() {
  */
 function clearTranslationEffects() {
   // 这里可以添加清除翻译效果的逻辑
-  console.log("已清除翻译效果");
+  // console.log("已清除翻译效果");
 }
 
 /**
@@ -1009,7 +1009,7 @@ async function main() {
 
   // 无论启用状态如何，都清除未翻译缓存
   clearUntranslatedCache().catch((error) => {
-    console.error("清除未翻译缓存失败:", error);
+    // console.error("清除未翻译缓存失败:", error);
   });
 
   // 初始化翻译功能（根据启用状态决定）
@@ -1019,7 +1019,7 @@ async function main() {
 // 添加消息监听器，接收来自popup的开关状态变化通知
 browser.runtime.onMessage.addListener(async (message) => {
   if (message.action === "extensionStatusChanged") {
-    console.log("接收到扩展状态变化通知:", message.enabled ? "启用" : "禁用");
+    // console.log("接收到扩展状态变化通知:", message.enabled ? "启用" : "禁用");
     await initializeTranslationIfEnabled();
   }
 });
@@ -1031,7 +1031,7 @@ export default defineContentScript({
   main() {
     // 执行主函数
     main().catch((error) => {
-      console.error("主函数执行失败:", error);
+      // console.error("主函数执行失败:", error);
     });
   },
 });

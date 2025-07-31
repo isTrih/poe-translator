@@ -16,15 +16,15 @@ export default defineBackground(() => {
   const fetchVersion = async (): Promise<{success: boolean, version?: string, error?: string}> => {
     try {
       const response = await fetch(
-        'https://api.github.com/repos/isTrih/poe-translator/contents/public/version.json?ref=main',
+        'https://assets.checkpoint321.com/poe/translations/version.json',
         {
           method: 'GET',
           headers: {
-            'Accept': 'application/vnd.github.v3.raw' // 请求原始文件内容
           },
           signal: AbortSignal.timeout(10000)
         }
       );
+            // 'Accept': 'application/vnd.github.v3.raw' // 请求原始文件内容
 
       if (!response.ok) {
         return {
