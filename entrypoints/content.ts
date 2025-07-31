@@ -521,12 +521,12 @@ function createFixedSponsorButton() {
   document.body.appendChild(container);
 }
 
-// 在页面加载完成后执行
-if (document.readyState === 'complete') {
-  createFixedSponsorButton();
-} else {
-  window.addEventListener('load', createFixedSponsorButton);
-}
+// // 在页面加载完成后执行
+// if (document.readyState === 'complete') {
+//   createFixedSponsorButton();
+// } else {
+//   window.addEventListener('load', createFixedSponsorButton);
+// }
 /**
  * 创建悬浮球DOM元素
  */
