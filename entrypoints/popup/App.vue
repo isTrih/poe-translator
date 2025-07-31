@@ -7,7 +7,38 @@ import { ref, onMounted } from 'vue';
  * 并将选择保存到浏览器本地存储
  */
 const selectedLanguage = ref<'simplified' | 'traditional'>('traditional');
+// 添加扩展开关状态变量
+const extensionEnabled = ref(true);
 
+// 从存储加载扩展开关状态
+async function loadExtensionStatus() {
+  try {
+    const { extensionEnabled: savedStatus } = await browser.storage.local.get('extensionEnabled');
+    if (savedStatus !== undefined) {
+      extensionEnabled.value = savedStatus;
+    }
+  } catch (error) {
+    console.error('加载扩展状态失败:', error);
+  }
+}
+
+// 保存扩展开关状态
+async function saveExtensionStatus() {
+  try {
+    await browser.storage.local.set({ extensionEnabled: extensionEnabled.value });
+
+    // 通知content script开关状态变化
+    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+    if (tab.id) {
+      browser.tabs.sendMessage(tab.id, {
+        action: 'extensionStatusChanged',
+        enabled: extensionEnabled.value
+      });
+    }
+  } catch (error) {
+    console.error('保存扩展状态失败:', error);
+  }
+}
 /**
  * 从浏览器存储加载用户语言偏好
  */
@@ -82,11 +113,6 @@ async function saveUrlPrefixConfig() {
   }
 }
 
-// 加载所有配置
-onMounted(async () => {
-  await loadLanguagePreference();
-  await loadUrlPrefixConfig();
-});
 
 /**
  * 清除翻译缓存并刷新页面
@@ -146,14 +172,15 @@ async function fetchConfigVersion() {
     versionLoading.value = false;
   }
 }
-
-// 在加载配置后获取版本信息
+// 在组件挂载时检查更新
 onMounted(async () => {
   await loadLanguagePreference();
+  await checkForUpdates(); // 添加版本检查
   await loadUrlPrefixConfig();
-  // 获取版本信息
   await fetchConfigVersion();
+  await loadExtensionStatus(); // 加载扩展开关状态
 });
+
 // 版本更新检查相关状态
 const localVersion = ref('');
 const remoteVersion = ref('');
@@ -201,7 +228,7 @@ async function getRemoteVersion() {
     console.log('Popup发送版本请求...');
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
-    
+
     // 使用Promise.race实现超时控制，移除sendMessage的signal参数
     const response: VersionCheckResponse = await Promise.race([
       browser.runtime.sendMessage<VersionCheckRequest, VersionCheckResponse>({
@@ -213,14 +240,14 @@ async function getRemoteVersion() {
         });
       })
     ]);
-    
+
     clearTimeout(timeoutId);
     console.log('Popup收到响应:', response);
-    
+
     if (!response) {
       throw new Error('未收到Background响应');
     }
-    
+
     if (response.success) {
       remoteVersion.value = response.version || '';
       return response.version || '';
@@ -291,13 +318,7 @@ async function checkForUpdates() {
   }
 }
 
-// 在组件挂载时检查更新
-onMounted(async () => {
-  await loadLanguagePreference();
-  await loadUrlPrefixConfig();
-  await fetchConfigVersion();
-  await checkForUpdates(); // 添加版本检查
-});
+
 
 /**
  * 下载当前网站的未翻译文本文件
@@ -309,39 +330,39 @@ async function downloadUntranslated() {
       alert('无法获取当前标签页');
       return;
     }
-    
+
     const response = await browser.tabs.sendMessage(tab.id, { action: 'downloadUntranslated' });
     const untranslatedData = response?.data || {};
-    
+
     if (Object.keys(untranslatedData).length === 0) {
       alert('没有未翻译的文本');
       return;
     }
-    
+
     // 获取当前域名并生成文件名
     const url = new URL(tab.url || 'https://unknown.com');
     const domain = url.hostname.replace(/^www\./, '');
     const fileName = `UN_${domain}.json`;
-    
+
     // 构建JSON数据
     const jsonData = JSON.stringify({ [fileName]: untranslatedData }, null, 2);
-    
+
     // 创建下载链接
     const blob = new Blob([jsonData], { type: 'application/json' });
     const urlObject = URL.createObjectURL(blob);
-    
+
     const a = document.createElement('a');
     a.href = urlObject;
     a.download = fileName;
     document.body.appendChild(a);
     a.click();
-    
+
     // 清理
     setTimeout(() => {
       document.body.removeChild(a);
       URL.revokeObjectURL(urlObject);
     }, 0);
-    
+
   } catch (error) {
     console.error('下载未翻译文本失败:', error);
     alert('下载失败，请重试');
@@ -373,7 +394,19 @@ async function downloadUntranslated() {
         <h2 class="text-xl font-bold text-red-500 mb-2 text-shadow">语言设置
           <span class="text-xs text-red-400/60 text-center mt-1">（选择后页面将自动刷新）</span>
         </h2>
-
+      <!-- 添加扩展开关按钮 -->
+      <div class="mb-4 p-3 bg-gray-900/70 border border-gray-800 rounded-sm">
+        <label class="flex items-center justify-between cursor-pointer">
+          <span class="text-amber-200">扩展功能开关</span>
+          <input 
+            type="checkbox" 
+            v-model="extensionEnabled" 
+            @change="saveExtensionStatus"
+            class="accent-red-600 h-5 w-5"
+          />
+        </label>
+        <p class="text-xs text-red-500/90 mt-1">开启/关闭插件功能</p>
+      </div>
         <div class="language-selector flex flex-col gap-2.5">
           <label
             class="radio-label flex items-center p-3 bg-gray-900/70 border border-gray-800 cursor-pointer hover:border-red-800 transition duration-300 hover:bg-gray-800/70">
@@ -412,7 +445,7 @@ async function downloadUntranslated() {
         <div class="version-info mt-3 text-xs text-red-400/80">
           <span>当前版本: {{ localVersion }}</span>
         </div>
-                <div class="version-info mt-3 text-xs text-red-400/80">
+        <div class="version-info mt-3 text-xs text-red-400/80">
           <span>最新版本: {{ remoteVersion }}</span>
         </div>
       </div>
@@ -448,4 +481,3 @@ async function downloadUntranslated() {
   text-shadow: 0 0 5px rgba(180, 0, 0, 0.7), 0 0 2px rgba(255, 215, 0, 0.5);
 }
 </style>
-
