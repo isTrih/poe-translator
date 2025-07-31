@@ -1,4 +1,5 @@
 {
+  "un_maxroll.gg.json": "[object Object]",
   "mercenaries": "傭兵賽季",
   "hardcore mercenaries": "傭兵賽季-專家模式",
   "ssf mercenaries": "傭兵賽季-自力模式",
@@ -203,5 +204,5 @@
   "a day ago": "1 天前",
   "tuesday, jul # #:# pm": "星期二, 7月# #:# 下午",
   "total price:": "總計價格:",
-  "url_version": "1.0.3 TC hotfix-3"
+  "url_version": "1.0.3 TC hotfix-4"
 }
