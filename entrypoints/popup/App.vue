@@ -378,7 +378,7 @@ async function downloadUntranslated() {
     <div v-if="updateAvailable"
       class="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-pulse">
       <span>有新版本可用！</span>
-      <a href="https://github.com/isTrih/poe-translator/releases" target="_blank" class="text-white underline">立即下载</a>
+      <a href="https://www.caimogu.cc/post/2122524.html" target="_blank" class="text-white underline">立即下载</a>
     </div>
     <div class="pl-4 pt-4 pr-4 pb-3">
       <!-- Wealthy Exile 按钮 -->

@@ -24,7 +24,7 @@ export default defineConfig({
     },
     description:
       '为流放之路(Path of Exile)游戏打造的浏览器翻译扩展，支持实时翻译游戏界面文本、语言切换和自定义翻译源配置，采用暗黑破坏神风格UI设计。',
-    version: '1.0.3',
+    version: '1.0.4',
     permissions: [
       "activeTab",
       "storage",

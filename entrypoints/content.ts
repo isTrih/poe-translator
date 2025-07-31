@@ -892,7 +892,7 @@ async function checkVersionUpdate(statusBall: HTMLElement) {
         "fixed top-5 right-5 bg-blue-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-pulse z-9999";
       updateNotification.innerHTML = `
                 <span>插件有新版本可用！</span>
-                <a href="https://github.com/isTrih/poe-translator/releases" target="_blank" class="underline hover:text-blue-200 transition-colors">前去下载</a>
+                <a href="https://www.caimogu.cc/post/2122524.html" target="_blank" class="underline hover:text-blue-200 transition-colors">前去下载</a>
             `;
       document.body.appendChild(updateNotification);
     } else {
