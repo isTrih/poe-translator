@@ -193,14 +193,14 @@ const updateCheckError = ref(false);
  */
 async function getLocalVersion() {
   try {
-    // const response = await fetch('/version.json', {
-    //   cache: 'no-store' // 不缓存本地文件
-    // });
-    // const data = await response.json();
-    // localVersion.value = data.version || '';
-    // return data.version || '';
-    var pkginfo = require('pkginfo')(module, 'vsersion');
-    return module.exports.version || "";
+    const response = await fetch('/version.json', {
+      cache: 'no-store' // 不缓存本地文件
+    });
+    const data = await response.json();
+    localVersion.value = data.version || '';
+    return data.version || '';
+    // var pkginfo = require('pkginfo')(module, 'vsersion');
+    // return module.exports.version || "";
   } catch (error) {
     console.error('获取本地版本失败:', error);
     localVersion.value = '未知版本';
@@ -396,19 +396,15 @@ async function downloadUntranslated() {
         <h2 class="text-xl font-bold text-red-500 mb-2 text-shadow">语言设置
           <span class="text-xs text-red-400/60 text-center mt-1">（选择后页面将自动刷新）</span>
         </h2>
-      <!-- 添加扩展开关按钮 -->
-      <div class="mb-4 p-3 bg-gray-900/70 border border-gray-800 rounded-sm">
-        <label class="flex items-center justify-between cursor-pointer">
-          <span class="text-amber-200">扩展功能开关</span>
-          <input 
-            type="checkbox" 
-            v-model="extensionEnabled" 
-            @change="saveExtensionStatus"
-            class="accent-red-600 h-5 w-5"
-          />
-        </label>
-        <p class="text-xs text-red-500/90 mt-1">开启/关闭插件功能</p>
-      </div>
+        <!-- 添加扩展开关按钮 -->
+        <div class="mb-4 p-3 bg-gray-900/70 border border-gray-800 rounded-sm">
+          <label class="flex items-center justify-between cursor-pointer">
+            <span class="text-amber-200">扩展功能开关</span>
+            <input type="checkbox" v-model="extensionEnabled" @change="saveExtensionStatus"
+              class="accent-red-600 h-5 w-5" />
+          </label>
+          <p class="text-xs text-red-500/90 mt-1">开启/关闭插件功能</p>
+        </div>
         <div class="language-selector flex flex-col gap-2.5">
           <label
             class="radio-label flex items-center p-3 bg-gray-900/70 border border-gray-800 cursor-pointer hover:border-red-800 transition duration-300 hover:bg-gray-800/70">
