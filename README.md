@@ -16,6 +16,26 @@
 
 ### 贡献者
 <!-- readme: contributors -start -->
+<table>
+	<tbody>
+		<tr>
+            <td align="center">
+                <a href="https://github.com/isTrih">
+                    <img src="https://avatars.githubusercontent.com/u/61228154?v=4" width="100;" alt="isTrih"/>
+                    <br />
+                    <sub><b>三氢</b></sub>
+                </a>
+            </td>
+            <td align="center">
+                <a href="https://github.com/lacusse">
+                    <img src="https://avatars.githubusercontent.com/u/26679075?v=4" width="100;" alt="lacusse"/>
+                    <br />
+                    <sub><b>lacusse</b></sub>
+                </a>
+            </td>
+		</tr>
+	<tbody>
+</table>
 <!-- readme: contributors -end -->
 
 ## ✨ 功能特性
