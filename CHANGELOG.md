@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/isTrih/poe-translator/compare/v1.1.0...v1.1.1) (2025-08-01)
+
+
+### Bug Fixes
+
+* **translation:** 添加翻译功能开关检查并优化悬浮球交互 ([fdf6266](https://github.com/isTrih/poe-translator/commit/fdf6266a355fb517feb15193a9252078e3523e3d))
+
 ## [1.1.0](https://github.com/isTrih/poe-translator/compare/v1.0.2...v1.1.0) (2025-08-01)
 
 
