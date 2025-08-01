@@ -1,5 +1,75 @@
 # Changelog
 
+## [1.1.0](https://github.com/isTrih/poe-translator/compare/v1.0.2...v1.1.0) (2025-08-01)
+
+
+### Features
+
+* **trans:** 添加翻译文件构建工具和热修复功能 ([b3efa2f](https://github.com/isTrih/poe-translator/commit/b3efa2fe52efd569f10059434b02efa7896515d3))
+* 优化翻译缓存机制和状态球显示 ([c0c0d87](https://github.com/isTrih/poe-translator/commit/c0c0d87a66a15605ae1c6649f717ccbe4abd0d30))
+* 初始化POE翻译助手项目 ([7a4a65b](https://github.com/isTrih/poe-translator/commit/7a4a65b1cc97e04cae3771527c6fcd64b6a95009))
+* 实现翻译插件核心功能与悬浮球控制界面 ([0639055](https://github.com/isTrih/poe-translator/commit/06390551b8daee022513ec0264ae96def69241db))
+* 实现翻译插件核心功能与悬浮球控制界面 ([4001c53](https://github.com/isTrih/poe-translator/commit/4001c53a8765a8818e62b4fa28c032ed490f90e1))
+* **扩展:** 添加扩展功能开关支持 ([b5a2574](https://github.com/isTrih/poe-translator/commit/b5a2574c4298d298f9e9cdf973215c1c7db08637))
+* 添加Tailwind CSS支持并优化UI样式 ([f928f01](https://github.com/isTrih/poe-translator/commit/f928f018e665813ed70fc3f44413fab84c2b8898))
+* **翻译:** 添加佣兵模式翻译并支持版本查询 ([deeeded](https://github.com/isTrih/poe-translator/commit/deeededb8cd141927f019b27f5b054efd9720eb7))
+* **翻译:** 添加未翻译文本收集和导出功能 ([e35f28c](https://github.com/isTrih/poe-translator/commit/e35f28c4674901acdbe085ef9a2777bef29285a9))
+
+
+### Bug Fixes
+
+* **popup:** 恢复版本检查功能并移除废弃代码 ([f8ebbf2](https://github.com/isTrih/poe-translator/commit/f8ebbf2f898e0e71029ee99ce779271b1c83ba2d))
+* **translations:** 修复未翻译文本保存时的数字还原问题 ([c0c0d87](https://github.com/isTrih/poe-translator/commit/c0c0d87a66a15605ae1c6649f717ccbe4abd0d30))
+* 在.gitignore中添加action token注释 ([616a421](https://github.com/isTrih/poe-translator/commit/616a421cd6ef6dda24bbe7864caae3771dea20e7))
+* 更新 release-please-action 至 v4 并简化配置 ([5be7afb](https://github.com/isTrih/poe-translator/commit/5be7afba249dfa65a688e0f59cce9e0c920ed3cc))
+* 更新 release.yml 配置以支持 standard-version 和更多变更类型 ([eaaaf4e](https://github.com/isTrih/poe-translator/commit/eaaaf4eac35c28aca2f98d1fe6ff32622d10b70c))
+* 更新版本号至1.0.4 ([78d774a](https://github.com/isTrih/poe-translator/commit/78d774a97f9c980b34e373c09ad873de52cc9daa))
+
+
+### Docs
+
+* **contributor:** contrib-readme-action has updated readme ([73ce8db](https://github.com/isTrih/poe-translator/commit/73ce8db89bfef16ab837c5664a27097675889b00))
+* 在README中添加打包扩展的说明 ([c0c0d87](https://github.com/isTrih/poe-translator/commit/c0c0d87a66a15605ae1c6649f717ccbe4abd0d30))
+* 更新README文档和翻译文件URL ([f928f01](https://github.com/isTrih/poe-translator/commit/f928f018e665813ed70fc3f44413fab84c2b8898))
+
+
+### Styling
+
+* **status-ball:** 移除状态球的硬编码样式和文本 ([c0c0d87](https://github.com/isTrih/poe-translator/commit/c0c0d87a66a15605ae1c6649f717ccbe4abd0d30))
+* 移除旧样式文件并应用Tailwind样式 ([f928f01](https://github.com/isTrih/poe-translator/commit/f928f018e665813ed70fc3f44413fab84c2b8898))
+
+
+### Code Refactoring
+
+* **content:** 将Tailwind类替换为内联样式以提升兼容性 ([56a73f8](https://github.com/isTrih/poe-translator/commit/56a73f8a84979a2cc8c28f319bf3e520c25caf07))
+* **popup:** 使用pkginfo替代fetch获取本地版本信息 ([4cc1b1c](https://github.com/isTrih/poe-translator/commit/4cc1b1c131c078fa832d70da922457cb8a1bff65))
+* **translations:** 为翻译缓存添加30分钟有效期检查 ([c0c0d87](https://github.com/isTrih/poe-translator/commit/c0c0d87a66a15605ae1c6649f717ccbe4abd0d30))
+* 移除创建赞助按钮的自动执行逻辑 ([5e6eb21](https://github.com/isTrih/poe-translator/commit/5e6eb216a8ebd6e4b26cacd3db063ad8121b3da2))
+* 移除调试日志并更新版本检查API ([1e7e5ff](https://github.com/isTrih/poe-translator/commit/1e7e5ffba86b5974a611a403a178993a2b0e82fd))
+* 重构翻译逻辑以支持特殊模式匹配 ([f928f01](https://github.com/isTrih/poe-translator/commit/f928f018e665813ed70fc3f44413fab84c2b8898))
+
+
+### Build System
+
+* 添加Tailwind相关依赖和配置 ([f928f01](https://github.com/isTrih/poe-translator/commit/f928f018e665813ed70fc3f44413fab84c2b8898))
+
+
+### CI
+
+* 添加 GitHub Actions 工作流配置 ([d5c9bf3](https://github.com/isTrih/poe-translator/commit/d5c9bf3c827a8e74183eadffa553fb58faf345d5))
+
+## [1.0.2](https://github.com/isTrih/poe-translator/compare/v1.0.1...v1.0.2) (2025-08-01)
+
+
+### Bug Fixes
+
+* **popup:** 恢复版本检查功能并移除废弃代码 ([f8ebbf2](https://github.com/isTrih/poe-translator/commit/f8ebbf2f898e0e71029ee99ce779271b1c83ba2d))
+
+
+### Code Refactoring
+
+* **popup:** 使用pkginfo替代fetch获取本地版本信息 ([4cc1b1c](https://github.com/isTrih/poe-translator/commit/4cc1b1c131c078fa832d70da922457cb8a1bff65))
+
 ## [1.0.1](https://github.com/isTrih/poe-translator/compare/v1.0.0...v1.0.1) (2025-08-01)
 
 
