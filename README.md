@@ -1,14 +1,22 @@
 # POE Translator
 
 <div align="center">
-  <img src="assets/icon.png" width="120" alt="POE Translator Logo">
-  <p>🌐 为流放之路(Path of Exile)打造的浏览器翻译扩展</p>
-  <div>
+  <!-- 为徽标添加外边距，使其下方有更多空间 -->
+  <img src="assets/icon.png" width="120" alt="POE Translator Logo" style="margin-bottom: 1rem;">
+  <!-- 为描述文本设置字体大小和外边距 -->
+  <p style="font-size: 1.2rem; margin-bottom: 1.5rem;">🌐 为流放之路(Path of Exile)打造的浏览器翻译扩展</p>
+  <!-- 为徽章容器添加间距，优化布局 -->
+  <div style="display: flex; gap: 1rem; justify-content: center;">
     <a href="https://github.com/isTrih/poe-translator"><img src="https://img.shields.io/github/stars/isTrih/poe-translator?style=social" alt="GitHub Stars"></a>
     <a href="https://afdian.tv/a/istrih"><img src="https://img.shields.io/badge/爱发电-支持作者-orange" alt="爱发电支持"></a>
     <a href="https://www.gnu.org/licenses/agpl-3.0.html"><img src="https://img.shields.io/badge/License-AGPLv3-blue.svg" alt="AGPLv3 License"></a>
   </div>
+  <!-- 添加贡献者模块 -->
 </div>
+
+### 贡献者
+<!-- readme: contributors -start -->
+<!-- readme: contributors -end -->
 
 ## ✨ 功能特性
 
