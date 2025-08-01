@@ -1,6 +1,5 @@
 import { translationMaps } from "../utils/trans/translationMap";
 import { TranslationMap } from "../utils/trans/types";
-import "~/assets/tailwind.css";
 /**
  * IndexedDB存储相关类型定义
  */
@@ -635,8 +634,23 @@ function createFloatingBall() {
   const mainBall = document.createElement("div");
   mainBall.id = "poe-translator-main-ball";
   // 增强视觉效果：增大尺寸、增强阴影、添加hover动画
-  mainBall.className =
-    "w-12 h-12 rounded-full bg-cover shadow-lg shadow-blue-500/30 border-2 border-blue-500 bg-white bg-opacity-20 transition-all duration-300 relative hover:scale-110 hover:shadow-xl";
+  mainBall.style.width = "3rem"; // w-12
+  mainBall.style.height = "3rem"; // h-12
+  mainBall.style.borderRadius = "50%"; // rounded-full
+  mainBall.style.backgroundSize = "cover"; // bg-cover
+  mainBall.style.boxShadow = "0 10px 15px -3px rgba(59, 130, 246, 0.3), 0 4px 6px -4px rgba(59, 130, 246, 0.3)"; // shadow-lg shadow-blue-500/30
+  mainBall.style.border = "2px solid #3b82f6"; // border-2 border-blue-500
+  mainBall.style.backgroundColor = "rgba(255, 255, 255, 0.2)"; // bg-white bg-opacity-20
+  mainBall.style.transition = "all 300ms"; // transition-all duration-300
+  mainBall.style.position = "relative"; // relative
+  mainBall.addEventListener('mouseenter', () => {
+    mainBall.style.transform = "scale(1.1)"; // hover:scale-110
+    mainBall.style.boxShadow = "0 20px 25px -5px rgba(59, 130, 246, 0.3), 0 8px 10px -6px rgba(59, 130, 246, 0.3)"; // hover:shadow-xl
+  });
+  mainBall.addEventListener('mouseleave', () => {
+    mainBall.style.transform = "";
+    mainBall.style.boxShadow = "0 10px 15px -3px rgba(59, 130, 246, 0.3), 0 4px 6px -4px rgba(59, 130, 246, 0.3)";
+  });
   mainBall.style.backgroundImage = `url('${browser.runtime.getURL(
     "/icon.png"
   )}')`;
@@ -644,8 +658,22 @@ function createFloatingBall() {
   // 添加hover提示框
   const tooltip = document.createElement("div");
   // 将bottom改为top-full并添加margin-top，确保提示框显示在悬浮球下方
-  tooltip.className =
-    "absolute bottom-12px right-6px transform -translate-x-1/2 bg-gray-800 text-white text-xs py-1 px-2 rounded opacity-0 transition-opacity duration-200 whitespace-nowrap mt-2";
+  tooltip.style.position = "absolute";
+  tooltip.style.bottom = "12px";
+  tooltip.style.right = "6px";
+  tooltip.style.transform = "translateX(-50%)";
+  tooltip.style.backgroundColor = "#1f2937"; // bg-gray-800
+  tooltip.style.color = "white";
+  tooltip.style.fontSize = "0.75rem"; // text-xs
+  tooltip.style.paddingTop = "0.25rem"; // py-1
+  tooltip.style.paddingBottom = "0.25rem"; // py-1
+  tooltip.style.paddingLeft = "0.5rem"; // px-2
+  tooltip.style.paddingRight = "0.5rem"; // px-2
+  tooltip.style.borderRadius = "0.25rem"; // rounded
+  tooltip.style.opacity = "0";
+  tooltip.style.transition = "opacity 200ms";
+  tooltip.style.whiteSpace = "nowrap";
+  tooltip.style.marginTop = "0.5rem"; // mt-2
   tooltip.textContent = "点击开关插件";
   mainBall.appendChild(tooltip);
 
@@ -661,8 +689,20 @@ function createFloatingBall() {
   const statusBall = document.createElement("div");
   statusBall.id = "poe-translator-status-ball";
   // 增强视觉效果：添加脉冲动画和边框 - 移除硬编码的bg-green-500
-  statusBall.className =
-    "w-5 h-5 rounded-full border-2 border-white shadow-md absolute top-[-5px] right-[-5px] flex items-center justify-center text-xs animate-pulse";
+  // 将 Tailwind 类转换为内联样式
+  statusBall.style.width = "1.25rem"; // w-5
+  statusBall.style.height = "1.25rem"; // h-5
+  statusBall.style.borderRadius = "50%"; // rounded-full
+  statusBall.style.border = "2px solid white"; // border-2 border-white
+  statusBall.style.boxShadow = "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"; // shadow-md
+  statusBall.style.position = "absolute"; // absolute
+  statusBall.style.top = "-5px"; // top-[-5px]
+  statusBall.style.right = "-5px"; // right-[-5px]
+  statusBall.style.display = "flex"; // flex
+  statusBall.style.alignItems = "center"; // items-center
+  statusBall.style.justifyContent = "center"; // justify-center
+  statusBall.style.fontSize = "0.75rem"; // text-xs
+  statusBall.style.animation = "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite"; // animate-pulse
   // 移除初始文本设置，由updateStatusBall统一控制
   // statusBall.textContent = '✅';
 
@@ -888,12 +928,43 @@ async function checkVersionUpdate(statusBall: HTMLElement) {
     if (isNewVersionAvailable(localVersion, remoteVersion)) {
       // 创建版本更新通知框（使用Tailwind CSS类）
       const updateNotification = document.createElement("div");
-      updateNotification.className =
-        "fixed top-5 right-5 bg-blue-600 text-white px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 animate-pulse z-9999";
-      updateNotification.innerHTML = `
-                <span>插件有新版本可用！</span>
-                <a href="https://www.caimogu.cc/post/2122524.html" target="_blank" class="underline hover:text-blue-200 transition-colors">前去下载</a>
-            `;
+      // 设置内联样式
+      updateNotification.style.position = "fixed";
+      updateNotification.style.top = "20px"; // top-5 (5*4px)
+      updateNotification.style.right = "20px"; // right-5 (5*4px)
+      updateNotification.style.backgroundColor = "#2563eb"; // bg-blue-600
+      updateNotification.style.color = "#ffffff"; // text-white
+      updateNotification.style.paddingLeft = "16px"; // px-4 (4*4px)
+      updateNotification.style.paddingRight = "16px"; // px-4 (4*4px)
+      updateNotification.style.paddingTop = "12px"; // py-3 (3*4px)
+      updateNotification.style.paddingBottom = "12px"; // py-3 (3*4px)
+      updateNotification.style.borderRadius = "0.5rem"; // rounded-lg
+      updateNotification.style.boxShadow = "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)"; // shadow-lg
+      updateNotification.style.display = "flex"; // flex
+      updateNotification.style.alignItems = "center"; // items-center
+      updateNotification.style.gap = "8px"; // space-x-2 (2*4px)
+      updateNotification.style.animation = "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite"; // animate-pulse
+      updateNotification.style.zIndex = "9999"; // z-9999
+
+      const span = document.createElement("span");
+      span.textContent = "插件有新版本可用！";
+
+      const link = document.createElement("a");
+      link.href = "https://www.caimogu.cc/post/2122524.html";
+      link.target = "_blank";
+      link.textContent = "前去下载";
+      link.style.textDecoration = "underline"; // underline
+      // 添加悬停事件
+      link.addEventListener('mouseenter', () => {
+        link.style.color = "#bfdbfe"; // hover:text-blue-200
+      });
+      link.addEventListener('mouseleave', () => {
+        link.style.color = "#ffffff"; // 恢复默认颜色
+      });
+      link.style.transition = "color 0.15s ease-in-out"; // transition-colors
+
+      updateNotification.appendChild(span);
+      updateNotification.appendChild(link);
       document.body.appendChild(updateNotification);
     } else {
       // 版本已是最新，显示正常状态
@@ -989,13 +1060,55 @@ function updateFloatingBallStatus(enabled: boolean) {
   if (statusBall) {
     // 更新状态球颜色和文本
     if (enabled) {
-      statusBall.className =
-        "w-5 h-5 rounded-full border-2 border-white shadow-md absolute top-[-5px] right-[-5px] flex items-center justify-center text-xs animate-pulse bg-green-500";
+      // 设置内联样式
+      statusBall.style.width = "1.25rem"; // w-5
+      statusBall.style.height = "1.25rem"; // h-5
+      statusBall.style.borderRadius = "50%"; // rounded-full
+      statusBall.style.border = "2px solid white"; // border-2 border-white
+      statusBall.style.boxShadow = "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"; // shadow-md
+      statusBall.style.position = "absolute"; // absolute
+      statusBall.style.top = "-5px"; // top-[-5px]
+      statusBall.style.right = "-5px"; // right-[-5px]
+      statusBall.style.display = "flex"; // flex
+      statusBall.style.alignItems = "center"; // items-center
+      statusBall.style.justifyContent = "center"; // justify-center
+      statusBall.style.fontSize = "0.75rem"; // text-xs
+      statusBall.style.backgroundColor = "#22c55e"; // bg-green-500
+      // 添加脉冲动画
+      statusBall.style.animation = "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite";
       statusBall.textContent = "✅";
+      
+      // 添加hover事件
+      statusBall.addEventListener('mouseenter', () => {
+        statusBall.style.transform = "scale(1.1)";
+      });
+      statusBall.addEventListener('mouseleave', () => {
+        statusBall.style.transform = "";
+      });
     } else {
-      statusBall.className =
-        "w-5 h-5 rounded-full border-2 border-white shadow-md absolute top-[-5px] right-[-5px] flex items-center justify-center text-xs bg-red-500";
+      // 设置内联样式
+      statusBall.style.width = "1.25rem"; // w-5
+      statusBall.style.height = "1.25rem"; // h-5
+      statusBall.style.borderRadius = "50%"; // rounded-full
+      statusBall.style.border = "2px solid white"; // border-2 border-white
+      statusBall.style.boxShadow = "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"; // shadow-md
+      statusBall.style.position = "absolute"; // absolute
+      statusBall.style.top = "-5px"; // top-[-5px]
+      statusBall.style.right = "-5px"; // right-[-5px]
+      statusBall.style.display = "flex"; // flex
+      statusBall.style.alignItems = "center"; // items-center
+      statusBall.style.justifyContent = "center"; // justify-center
+      statusBall.style.fontSize = "0.75rem"; // text-xs
+      statusBall.style.backgroundColor = "#ef4444"; // bg-red-500
       statusBall.textContent = "❌";
+      
+      // 添加hover事件
+      statusBall.addEventListener('mouseenter', () => {
+        statusBall.style.transform = "scale(1.1)";
+      });
+      statusBall.addEventListener('mouseleave', () => {
+        statusBall.style.transform = "";
+      });
     }
   }
 }
