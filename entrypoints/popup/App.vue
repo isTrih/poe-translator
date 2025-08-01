@@ -193,12 +193,14 @@ const updateCheckError = ref(false);
  */
 async function getLocalVersion() {
   try {
-    const response = await fetch('/version.json', {
-      cache: 'no-store' // 不缓存本地文件
-    });
-    const data = await response.json();
-    localVersion.value = data.version || '';
-    return data.version || '';
+    // const response = await fetch('/version.json', {
+    //   cache: 'no-store' // 不缓存本地文件
+    // });
+    // const data = await response.json();
+    // localVersion.value = data.version || '';
+    // return data.version || '';
+    var pkginfo = require('pkginfo')(module, 'vsersion');
+    return module.exports.version || "";
   } catch (error) {
     console.error('获取本地版本失败:', error);
     localVersion.value = '未知版本';
