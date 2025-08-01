@@ -466,23 +466,29 @@ function translatePage(
  * 从存储中获取用户选择的语言偏好并执行翻译
  */
 async function initTranslation() {
-  try {
-    const storageResult = await browser.storage.local.get("language");
-    // console.log('从存储获取的语言设置:', storageResult);
-    const { language = "traditional" } = storageResult;
-    // console.log('最终使用的语言设置:', language);
-
-    // 加载翻译文件
-    const translations = await loadTranslations(language);
-    translatePage(language as "simplified" | "traditional", translations);
-  } catch (error) {
-    // console.error("翻译初始化失败，错误详情:", error);
-    // 出错时尝试加载默认语言
+  // 加载翻译启用状态
+  const { translationEnabled = true } = await browser.storage.local.get(
+    "translationEnabled"
+  );
+  if (translationEnabled) {
     try {
-      const translations = await loadTranslations("traditional");
-      translatePage("traditional", translations);
-    } catch (defaultError) {
-      // console.error('默认翻译加载失败:', defaultError);
+      const storageResult = await browser.storage.local.get("language");
+      // console.log('从存储获取的语言设置:', storageResult);
+      const { language = "traditional" } = storageResult;
+      // console.log('最终使用的语言设置:', language);
+
+      // 加载翻译文件
+      const translations = await loadTranslations(language);
+      translatePage(language as "simplified" | "traditional", translations);
+    } catch (error) {
+      // console.error("翻译初始化失败，错误详情:", error);
+      // 出错时尝试加载默认语言
+      try {
+        const translations = await loadTranslations("traditional");
+        translatePage("traditional", translations);
+      } catch (defaultError) {
+        // console.error('默认翻译加载失败:', defaultError);
+      }
     }
   }
 }
@@ -638,18 +644,21 @@ function createFloatingBall() {
   mainBall.style.height = "3rem"; // h-12
   mainBall.style.borderRadius = "50%"; // rounded-full
   mainBall.style.backgroundSize = "cover"; // bg-cover
-  mainBall.style.boxShadow = "0 10px 15px -3px rgba(59, 130, 246, 0.3), 0 4px 6px -4px rgba(59, 130, 246, 0.3)"; // shadow-lg shadow-blue-500/30
+  mainBall.style.boxShadow =
+    "0 10px 15px -3px rgba(59, 130, 246, 0.3), 0 4px 6px -4px rgba(59, 130, 246, 0.3)"; // shadow-lg shadow-blue-500/30
   mainBall.style.border = "2px solid #3b82f6"; // border-2 border-blue-500
   mainBall.style.backgroundColor = "rgba(255, 255, 255, 0.2)"; // bg-white bg-opacity-20
   mainBall.style.transition = "all 300ms"; // transition-all duration-300
   mainBall.style.position = "relative"; // relative
-  mainBall.addEventListener('mouseenter', () => {
+  mainBall.addEventListener("mouseenter", () => {
     mainBall.style.transform = "scale(1.1)"; // hover:scale-110
-    mainBall.style.boxShadow = "0 20px 25px -5px rgba(59, 130, 246, 0.3), 0 8px 10px -6px rgba(59, 130, 246, 0.3)"; // hover:shadow-xl
+    mainBall.style.boxShadow =
+      "0 20px 25px -5px rgba(59, 130, 246, 0.3), 0 8px 10px -6px rgba(59, 130, 246, 0.3)"; // hover:shadow-xl
   });
-  mainBall.addEventListener('mouseleave', () => {
+  mainBall.addEventListener("mouseleave", () => {
     mainBall.style.transform = "";
-    mainBall.style.boxShadow = "0 10px 15px -3px rgba(59, 130, 246, 0.3), 0 4px 6px -4px rgba(59, 130, 246, 0.3)";
+    mainBall.style.boxShadow =
+      "0 10px 15px -3px rgba(59, 130, 246, 0.3), 0 4px 6px -4px rgba(59, 130, 246, 0.3)";
   });
   mainBall.style.backgroundImage = `url('${browser.runtime.getURL(
     "/icon.png"
@@ -694,7 +703,8 @@ function createFloatingBall() {
   statusBall.style.height = "1.25rem"; // h-5
   statusBall.style.borderRadius = "50%"; // rounded-full
   statusBall.style.border = "2px solid white"; // border-2 border-white
-  statusBall.style.boxShadow = "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"; // shadow-md
+  statusBall.style.boxShadow =
+    "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"; // shadow-md
   statusBall.style.position = "absolute"; // absolute
   statusBall.style.top = "-5px"; // top-[-5px]
   statusBall.style.right = "-5px"; // right-[-5px]
@@ -761,76 +771,30 @@ async function initFloatingBall() {
   statusBall.addEventListener("click", toggleTranslation);
 }
 
-// /**
-//  * 初始化翻译功能（仅当启用状态为true时执行）
-//  */
-// async function initializeTranslationIfEnabled() {
-//   const { translationEnabled = true } = await browser.storage.local.get('translationEnabled');
+// 监听页面动态内容变化
+// 添加浏览器环境检查，避免在非浏览器环境执行
+if (typeof window !== "undefined" && "MutationObserver" in window) {
+  const observer = new MutationObserver((mutations) => {
+    // 添加防抖处理，避免频繁翻译
+    let timeoutId: number;
+    mutations.forEach((mutation) => {
+      mutation.addedNodes.forEach((node) => {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          clearTimeout(timeoutId);
+          timeoutId = window.setTimeout(() => {
+            initTranslation();
+            replacePremiumLink(); // 添加元素替换
+          }, 300);
+        }
+      });
+    });
+  });
 
-//   if (translationEnabled) {
-//     // 页面加载完成后执行翻译和元素替换
-//     if (document.readyState === 'loading') {
-//       document.addEventListener('DOMContentLoaded', () => {
-//         initTranslation();
-//         replacePremiumLink();
-//       });
-//     } else {
-//       initTranslation();
-//       replacePremiumLink();
-//     }
-
-//     // 监听页面动态内容变化
-//     if (typeof window !== 'undefined' && 'MutationObserver' in window) {
-//       const observer = new MutationObserver(mutations => {
-//         let timeoutId: number;
-//         mutations.forEach(mutation => {
-//           mutation.addedNodes.forEach(node => {
-//             if (node.nodeType === Node.ELEMENT_NODE) {
-//               clearTimeout(timeoutId);
-//               timeoutId = window.setTimeout(() => {
-//                 initTranslation();
-//                 replacePremiumLink();
-//               }, 300);
-//             }
-//           });
-//         });
-//       });
-
-//       observer.observe(document.body, {
-//         childList: true,
-//         subtree: true
-//       });
-//     }
-//   } else {
-//     console.log('翻译功能已禁用');
-//     replacePremiumLink();
-//   }
-// }
-
-// // 监听页面动态内容变化
-// // 添加浏览器环境检查，避免在非浏览器环境执行
-// if (typeof window !== 'undefined' && 'MutationObserver' in window) {
-//   const observer = new MutationObserver(mutations => {
-//     // 添加防抖处理，避免频繁翻译
-//     let timeoutId: number;
-//     mutations.forEach(mutation => {
-//       mutation.addedNodes.forEach(node => {
-//         if (node.nodeType === Node.ELEMENT_NODE) {
-//           clearTimeout(timeoutId);
-//           timeoutId = window.setTimeout(() => {
-//             initTranslation();
-//             replacePremiumLink(); // 添加元素替换
-//           }, 300);
-//         }
-//       });
-//     });
-//   });
-
-//   observer.observe(document.body, {
-//     childList: true,
-//     subtree: true
-//   });
-// }
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
+}
 
 // 监听来自popup的消息，刷新翻译
 browser.runtime.onMessage.addListener((message) => {
@@ -939,11 +903,13 @@ async function checkVersionUpdate(statusBall: HTMLElement) {
       updateNotification.style.paddingTop = "12px"; // py-3 (3*4px)
       updateNotification.style.paddingBottom = "12px"; // py-3 (3*4px)
       updateNotification.style.borderRadius = "0.5rem"; // rounded-lg
-      updateNotification.style.boxShadow = "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)"; // shadow-lg
+      updateNotification.style.boxShadow =
+        "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)"; // shadow-lg
       updateNotification.style.display = "flex"; // flex
       updateNotification.style.alignItems = "center"; // items-center
       updateNotification.style.gap = "8px"; // space-x-2 (2*4px)
-      updateNotification.style.animation = "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite"; // animate-pulse
+      updateNotification.style.animation =
+        "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite"; // animate-pulse
       updateNotification.style.zIndex = "9999"; // z-9999
 
       const span = document.createElement("span");
@@ -955,10 +921,10 @@ async function checkVersionUpdate(statusBall: HTMLElement) {
       link.textContent = "前去下载";
       link.style.textDecoration = "underline"; // underline
       // 添加悬停事件
-      link.addEventListener('mouseenter', () => {
+      link.addEventListener("mouseenter", () => {
         link.style.color = "#bfdbfe"; // hover:text-blue-200
       });
-      link.addEventListener('mouseleave', () => {
+      link.addEventListener("mouseleave", () => {
         link.style.color = "#ffffff"; // 恢复默认颜色
       });
       link.style.transition = "color 0.15s ease-in-out"; // transition-colors
@@ -1033,9 +999,46 @@ async function initializeTranslationIfEnabled() {
     // 启用时执行翻译初始化
     // 初始化悬浮球（无论翻译是否启用都需要显示）
     initFloatingBall();
-    initTranslation().catch((error) => {
-      // console.error("翻译初始化失败:", error);
-    });
+    // 页面加载完成后执行翻译和元素替换
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", () => {
+        initTranslation().catch((error) => {
+          console.error("翻译初始化失败:", error);
+        });
+        replacePremiumLink();
+      });
+    } else {
+      initTranslation().catch((error) => {
+        console.error("翻译初始化失败:", error);
+      });
+      initFloatingBall();
+      replacePremiumLink();
+    }
+
+    // 监听页面动态内容变化
+    if (typeof window !== "undefined" && "MutationObserver" in window) {
+      const observer = new MutationObserver((mutations) => {
+        let timeoutId: number;
+        mutations.forEach((mutation) => {
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              clearTimeout(timeoutId);
+              timeoutId = window.setTimeout(() => {
+                initTranslation().catch((error) => {
+                  console.error("翻译初始化失败:", error);
+                });
+                replacePremiumLink();
+              }, 300);
+            }
+          });
+        });
+      });
+
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+      });
+    }
   } else {
     // 禁用时清除可能的翻译效果
     updateFloatingBallStatus(enabled);
@@ -1065,7 +1068,8 @@ function updateFloatingBallStatus(enabled: boolean) {
       statusBall.style.height = "1.25rem"; // h-5
       statusBall.style.borderRadius = "50%"; // rounded-full
       statusBall.style.border = "2px solid white"; // border-2 border-white
-      statusBall.style.boxShadow = "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"; // shadow-md
+      statusBall.style.boxShadow =
+        "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"; // shadow-md
       statusBall.style.position = "absolute"; // absolute
       statusBall.style.top = "-5px"; // top-[-5px]
       statusBall.style.right = "-5px"; // right-[-5px]
@@ -1075,14 +1079,15 @@ function updateFloatingBallStatus(enabled: boolean) {
       statusBall.style.fontSize = "0.75rem"; // text-xs
       statusBall.style.backgroundColor = "#22c55e"; // bg-green-500
       // 添加脉冲动画
-      statusBall.style.animation = "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite";
+      statusBall.style.animation =
+        "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite";
       statusBall.textContent = "✅";
-      
+
       // 添加hover事件
-      statusBall.addEventListener('mouseenter', () => {
+      statusBall.addEventListener("mouseenter", () => {
         statusBall.style.transform = "scale(1.1)";
       });
-      statusBall.addEventListener('mouseleave', () => {
+      statusBall.addEventListener("mouseleave", () => {
         statusBall.style.transform = "";
       });
     } else {
@@ -1091,7 +1096,8 @@ function updateFloatingBallStatus(enabled: boolean) {
       statusBall.style.height = "1.25rem"; // h-5
       statusBall.style.borderRadius = "50%"; // rounded-full
       statusBall.style.border = "2px solid white"; // border-2 border-white
-      statusBall.style.boxShadow = "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"; // shadow-md
+      statusBall.style.boxShadow =
+        "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)"; // shadow-md
       statusBall.style.position = "absolute"; // absolute
       statusBall.style.top = "-5px"; // top-[-5px]
       statusBall.style.right = "-5px"; // right-[-5px]
@@ -1101,12 +1107,12 @@ function updateFloatingBallStatus(enabled: boolean) {
       statusBall.style.fontSize = "0.75rem"; // text-xs
       statusBall.style.backgroundColor = "#ef4444"; // bg-red-500
       statusBall.textContent = "❌";
-      
+
       // 添加hover事件
-      statusBall.addEventListener('mouseenter', () => {
+      statusBall.addEventListener("mouseenter", () => {
         statusBall.style.transform = "scale(1.1)";
       });
-      statusBall.addEventListener('mouseleave', () => {
+      statusBall.addEventListener("mouseleave", () => {
         statusBall.style.transform = "";
       });
     }
