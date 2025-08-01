@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.2](https://github.com/isTrih/poe-translator/compare/v1.0.1...v1.0.2) (2025-08-01)
+
+
+### Bug Fixes
+
+* **popup:** 恢复版本检查功能并移除废弃代码 ([f8ebbf2](https://github.com/isTrih/poe-translator/commit/f8ebbf2f898e0e71029ee99ce779271b1c83ba2d))
+
+
+### Code Refactoring
+
+* **popup:** 使用pkginfo替代fetch获取本地版本信息 ([4cc1b1c](https://github.com/isTrih/poe-translator/commit/4cc1b1c131c078fa832d70da922457cb8a1bff65))
+
 ## [1.0.1](https://github.com/isTrih/poe-translator/compare/v1.0.0...v1.0.1) (2025-08-01)
 
 
