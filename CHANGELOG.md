@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1](https://github.com/isTrih/poe-translator/compare/v1.0.0...v1.0.1) (2025-08-01)
+
+
+### Bug Fixes
+
+* 更新 release-please-action 至 v4 并简化配置 ([5be7afb](https://github.com/isTrih/poe-translator/commit/5be7afba249dfa65a688e0f59cce9e0c920ed3cc))
+* 更新 release.yml 配置以支持 standard-version 和更多变更类型 ([eaaaf4e](https://github.com/isTrih/poe-translator/commit/eaaaf4eac35c28aca2f98d1fe6ff32622d10b70c))
+
 ## 1.0.0 (2025-08-01)
 
 
