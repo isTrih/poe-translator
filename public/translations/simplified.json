@@ -1,5 +1,4 @@
 {
-  "blueprints": "蓝图",
   "mercenaries": "佣兵赛季",
   "hardcore mercenaries": "佣兵赛季-专家模式",
   "ssf mercenaries": "佣兵赛季-独狼模式",
@@ -241,5 +240,5 @@
   "replica ungil's gauche boot knife": "赝品·恩吉尔的叉刃 战乱刀",
   "replica windripper imperial bow": "赝品·裂风 帝国之弓",
   "replica wings of entropy ezomyte axe": "赝品·乱世之翼 艾兹麦巨斧",
-  "url_version": "1.0.4 SC hotfix-3"
+  "url_version": "1.0.4 SC hotfix-5"
 }
