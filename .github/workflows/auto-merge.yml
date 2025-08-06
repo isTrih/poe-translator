@@ -26,5 +26,5 @@ jobs:
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUBTOKEN }}'
           MERGE_LABELS: ''
-          # 只要是 isTrih 用户，都进行合并
-          MERGE_FILTER_AUTHOR: 'isTrih'
+          # 只要是 isTrih 或 lacusse 用户，都进行合并
+          MERGE_FILTER_AUTHOR: 'isTrih|lacusse'
